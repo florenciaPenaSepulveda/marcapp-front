@@ -3,8 +3,8 @@ import { useRef, useState } from 'react';
 import registerService from '../services/register.services';
 import { AlertDialog } from 'native-base';
 import { useNavigation } from '@react-navigation/core';
-import { RootStackParamList } from '../../App';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../Router';
 
 type FormDataT = {
   name: string;
@@ -134,6 +134,14 @@ const Register = () => {
           <Button isLoading={loading} onPress={onClickButton}>
             Crear cuenta
           </Button>
+        </Center>
+        <Center>
+          <Text
+            style={{ marginTop: '5%' }}
+            onPress={() => navigation.navigate('Login')}
+          >
+            Ya tengo cuenta
+          </Text>
         </Center>
       </VStack>
     </Box>

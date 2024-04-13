@@ -10,7 +10,7 @@ const registerService = async (
   data: Record<string, string>
 ): Promise<RegisterServiceResponseT> => {
   try {
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/register`;
+    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/auth/register`;
 
     return {
       success: true,
