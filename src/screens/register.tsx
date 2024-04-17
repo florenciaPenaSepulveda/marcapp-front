@@ -1,25 +1,25 @@
 import { Box, Button, Center, Input, Text, VStack } from 'native-base';
 import { useRef, useState } from 'react';
-import registerService from '../services/register.services';
+import registerService from '../services/register.service';
 import { AlertDialog } from 'native-base';
 import { useNavigation } from '@react-navigation/core';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 
 type FormDataT = {
-  name: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  password: string;
-  birthdate: string;
+  pass: string;
+  birthday: string;
 };
 
 const InitData = {
-  name: '',
-  lastName: '',
-  email: '',
-  password: '',
-  birthdate: '',
+  first_name: 'Jose',
+  last_name: 'Carr',
+  email: '123@example',
+  pass: '12321superpass',
+  birthday: '12-12-2020',
 };
 
 const Register = () => {
@@ -83,8 +83,8 @@ const Register = () => {
             size="l"
             variant="outline"
             placeholder="Nombre"
-            value={data?.name}
-            onChange={(e) => setValue('name', e?.nativeEvent?.text as string)}
+            value={data?.first_name}
+            onChange={(e) => setValue('first_name', e?.nativeEvent?.text as string)}
           />
         </Center>
         <Center>
@@ -92,9 +92,9 @@ const Register = () => {
             size="l"
             variant="outline"
             placeholder="Apellido"
-            value={data?.lastName}
+            value={data?.last_name}
             onChange={(e) =>
-              setValue('lastName', e?.nativeEvent?.text as string)
+              setValue('last_name', e?.nativeEvent?.text as string)
             }
           />
         </Center>
@@ -113,9 +113,9 @@ const Register = () => {
             type="password"
             variant="outline"
             placeholder="Contraseña"
-            value={data?.password}
+            value={data?.pass}
             onChange={(e) =>
-              setValue('password', e?.nativeEvent?.text as string)
+              setValue('pass', e?.nativeEvent?.text as string)
             }
           />
         </Center>
@@ -124,9 +124,9 @@ const Register = () => {
             size="l"
             variant="outline"
             placeholder="Fecha de nacimiento"
-            value={data?.birthdate}
+            value={data?.birthday}
             onChange={(e) =>
-              setValue('birthdate', e?.nativeEvent?.text as string)
+              setValue('birthday', e?.nativeEvent?.text as string)
             }
           />
         </Center>

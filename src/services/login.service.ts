@@ -1,10 +1,9 @@
 import axios from 'axios';
 
-const loginService = async (payload: { user: string; password: string }) => {
+const loginService = async (payload: { email: string; password: string }) => {
   try {
-    const url = `${process.env.EXPO_PUBLIC_MS_USER_URL}/auth`;
-    const response = await axios.post(url, payload);
-
+    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/auth/login`;
+    const response = await axios.post(endpoint, payload);
     return response?.status === 201 ? response?.data : { data: undefined };
   } catch (error: unknown) {
     console.log(error);

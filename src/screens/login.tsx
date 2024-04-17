@@ -7,48 +7,52 @@ import { useNavigation } from '@react-navigation/native';
 import useStore from '../stores/useStore';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
+import loginService from '../services/login.service';
 
 const loginSchema = Joi.object({
-  user: Joi.string().min(1).max(10),
-  password: Joi.string().min(1).max(10),
+  email: Joi.string().min(1).max(30),
+  password: Joi.string().min(8).max(30),
 });
 
 const Login = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { setUser: setUserStore } = useStore();
+  const { setEmail: setEmailStore } = useStore();
   const [loading, setLoading] = useState<boolean>(false);
-  const [user, setUser] = useState<string>('');
-  const [errorMessageUser, setErrorMessageUser] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [errorMessageEmail, setErrorMessageEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [errorMessagePassword, setErrorMessagePassword] = useState<string>('');
 
   useEffect(() => {
-    const errors = loginSchema.validate({ user, password });
+    const errors = loginSchema.validate({ email, password });
+    console.log(email);
     console.log(password);
-    console.log(errors?.error?.details[0]?.context?.key);
+    console.log(errors);
 
-    // if (errors?.error?.details[0]?.context?.key === 'user') {
-    //   setErrorMessageUser(errors?.error?.details[0]?.message);
-    //   return;
-    // } else if (errors?.error?.details[0]?.context?.key === 'password') {
-    //   setErrorMessagePassword(errors?.error?.details[0]?.message);
-    //   return;
-    // }
+    if (errors?.error?.details[0]?.context?.key === 'email') {
+      setErrorMessageEmail(errors?.error?.details[0]?.message);
+      return;
+    } else if (errors?.error?.details[0]?.context?.key === 'password') {
+      setErrorMessagePassword(errors?.error?.details[0]?.message);
+      return;
+    }
 
-    // setErrorMessageUser('');
-    // setErrorMessagePassword('');
-  }, [user, password]);
+    setErrorMessageEmail('');
+    setErrorMessagePassword('');
+  }, [email, password]);
 
   const onLogin = async () => {
-    const payload = { user, password };
+    const payload = { email, password };
+    const response = await loginService(payload);
+    console.log(JSON.stringify(response));
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      setUserStore(user);
+      setEmailStore(email);
       navigation.navigate('Home');
     }, 3000);
-    // const response = await loginService(payload);
+    
   };
 
   return (
@@ -72,10 +76,10 @@ const Login = () => {
         MarcApp
       </Text>
       <Input
-        label="Usuario"
-        placeholder="Juanito"
-        errorMessage={errorMessageUser}
-        onChangeText={(value: string) => setUser(value)}
+        label="Email"
+        placeholder="mail@example.cl"
+        errorMessage={errorMessageEmail}
+        onChangeText={(value: string) => setEmail(value)}
       />
       <Input
         secureTextEntry
