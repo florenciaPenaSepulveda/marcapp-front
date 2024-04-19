@@ -15,11 +15,11 @@ type FormDataT = {
 };
 
 const InitData = {
-  first_name: 'Jose',
-  last_name: 'Carr',
-  email: '123@example',
-  pass: '12321superpass',
-  birthday: '12-12-2020',
+  first_name: '',
+  last_name: '',
+  email: '',
+  pass: '',
+  birthday: '',
 };
 
 const Register = () => {
@@ -43,11 +43,11 @@ const Register = () => {
   const onClickButton = async () => {
     setLoading(true);
     const response = await registerService(data);
-
     setLoading(false);
-    setMessage((response?.data || response?.error) as string);
+  
+    setMessage(response?.message || '');
     setAlert(true);
-
+  
     if (response?.success) {
       setData(InitData);
       navigation.navigate('Home');

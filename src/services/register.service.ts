@@ -3,7 +3,7 @@ import axios from 'axios';
 export type RegisterServiceResponseT = {
   success: boolean;
   data?: string;
-  error?: string;
+  message?: string; // Cambiado de error a message
 };
 
 const registerService = async (
@@ -11,27 +11,12 @@ const registerService = async (
 ): Promise<RegisterServiceResponseT> => {
   try {
     const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/register`;
-    console.log(endpoint);
-    return {
-      success: true,
-      data: (await axios.post(endpoint, data))?.data?.message,
-    };
-  } catch (e: unknown) {
-    let error = 'Ha ocurrido un error';
-    console.log({
-      e: (e as Record<string, Record<string, Record<string, unknown>>>)
-        ?.response?.data,
-    });
-    switch (
-      (e as Record<string, Record<string, Record<string, unknown>>>)?.response
-        ?.data?.message
-    ) {
-      case 'Entrada duplicada':
-        error = 'El email ya esta en uso';
-        break;
-    }
-
-    return { success: false, error };
+    const response = await axios.post(endpoint, data);
+    console.log(JSON.stringify(data));
+    return { success: true, data: response.data };
+    
+  } catch (error: unknown) {
+    return { success: false, message: 'Correo ya en uso' }; // Cambiado de error a message
   }
 };
 
