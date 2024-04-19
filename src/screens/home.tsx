@@ -2,7 +2,7 @@ import { Box } from 'native-base';
 import useStore from '../stores/useStore';
 
 const Home = () => {
-  const { user } = useStore();
+  const { email } = useStore();
   return (
     <Box
       style={{
@@ -13,7 +13,7 @@ const Home = () => {
         marginVertical: '10%',
       }}
     >
-      Hello world! {user}
+      Hello world! {email}
     </Box>
   );
 };

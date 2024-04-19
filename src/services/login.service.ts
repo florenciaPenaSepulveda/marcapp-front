@@ -6,7 +6,6 @@ const loginService = async (payload: { email: string; password: string }) => {
     const response = await axios.post(endpoint, payload);
     return response?.status === 201 ? response?.data : { data: undefined };
   } catch (error: unknown) {
-    console.log(error);
     return { status: 500 };
   }
 };
