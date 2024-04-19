@@ -11,7 +11,7 @@ import loginService from '../services/login.service';
 
 const loginSchema = Joi.object({
   email: Joi.string().min(1).max(30),
-  password: Joi.string().min(8).max(30),
+  password: Joi.string().min(2).max(30),
 });
 
 const Login = () => {
@@ -25,16 +25,17 @@ const Login = () => {
   const [errorMessagePassword, setErrorMessagePassword] = useState<string>('');
 
   useEffect(() => {
+    //VERIFICA SI LOS CAMPOS DE CONTRASEÑA Y CORREO TIENEN EL FORMATO CORRECTO
+    //HAY QUE ARREGLAR EL FORMATO
     const errors = loginSchema.validate({ email, password });
-    console.log(email);
-    console.log(password);
-    console.log(errors);
 
     if (errors?.error?.details[0]?.context?.key === 'email') {
       setErrorMessageEmail(errors?.error?.details[0]?.message);
+      //console.log("SetErrorEmail = " + errorMessageEmail);
       return;
     } else if (errors?.error?.details[0]?.context?.key === 'password') {
       setErrorMessagePassword(errors?.error?.details[0]?.message);
+      //console.log("SetErrorPassword = " + errorMessagePassword);
       return;
     }
 
@@ -44,14 +45,25 @@ const Login = () => {
 
   const onLogin = async () => {
     const payload = { email, password };
-    const response = await loginService(payload);
-    console.log(JSON.stringify(response));
+    console.log('Antes');
     setLoading(true);
-    setTimeout(() => {
+    const response = await loginService(payload);
+    console.log('Después');
+    console.log('Response.data.pass: ' + response.data?.pass);
+    console.log('Response JSON: ' + JSON.stringify(response.data?.pass));
+    
+    
+    if(!response?.success) {
+      console.log("Entró al if --------");
+      console.error('Error de autenticación:', response?.message);
       setLoading(false);
-      setEmailStore(email);
-      navigation.navigate('Home');
-    }, 3000);
+    } else {
+      setTimeout(() => {
+        setLoading(false);
+        setEmailStore(email);
+        navigation.navigate('Home');
+      }, 3000);
+    }
     
   };
 

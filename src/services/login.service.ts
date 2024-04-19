@@ -2,11 +2,23 @@ import axios from 'axios';
 
 const loginService = async (payload: { email: string; password: string }) => {
   try {
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/auth/login`;
-    const response = await axios.post(endpoint, payload);
-    return response?.status === 201 ? response?.data : { data: undefined };
+    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/${payload.email}`;
+    console.log('Endpoint: ' + endpoint);
+    const response = await axios.get(endpoint);
+    console.log('Respuesta desde BackEnd: ' + JSON.stringify(response.data));
+    console.log('Status respuesta: ' + response?.status);
+    console.log('Contraseña data: ' + response?.data.pass);
+    console.log('Contraseña payload: ' + payload.password);
+    
+    if(response?.status === 200 && response?.data.pass === payload.password) {
+      console.log('Log desde service responde.data = ' + JSON.stringify(response?.data));
+      return { success: true, data: response.data };
+    } else {
+      console.log('Contraseña incorrecta');
+      return { success: false, message: 'Contraseña incorrecta' };
+    }
   } catch (error: unknown) {
-    return { status: 500 };
+    return { success: false, message: 'Error de servidor' };
   }
 };
 

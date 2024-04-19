@@ -17,7 +17,6 @@ const Loading = () => {
   const getHealthcheck = async () => {
     setLoading(true);
     const res = await healthcheckService();
-    console.log(res)
     console.log(res.status)
 
     if (res.status === 200) {
