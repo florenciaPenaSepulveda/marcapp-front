@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const healthcheckService = async () => {
   try {
-    const url = "http://192.168.43.203:3001/";
+    const url = "http://192.168.1.167:3001";
     //Usar 10.0.0.2 si falla
 
     const response = await axios.get(url, { timeout: 5000 });

@@ -45,22 +45,16 @@ const Login = () => {
 
   const onLogin = async () => {
     const payload = { email, password };
-    console.log('Antes');
     setLoading(true);
     const response = await loginService(payload);
-    console.log('Después');
-    console.log('Response.data.pass: ' + response.data?.pass);
-    console.log('Response JSON: ' + JSON.stringify(response.data?.pass));
-    
     
     if(!response?.success) {
-      console.log("Entró al if --------");
       console.error('Error de autenticación:', response?.message);
       setLoading(false);
     } else {
       setTimeout(() => {
         setLoading(false);
-        setEmailStore(email);
+        
         navigation.navigate('Home');
       }, 3000);
     }
