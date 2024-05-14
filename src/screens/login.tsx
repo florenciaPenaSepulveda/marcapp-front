@@ -17,7 +17,7 @@ const loginSchema = Joi.object({
 const Login = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { setEmail: setEmailStore } = useStore();
+  const { setEmail: setEmailStore, setToken: setTokenStore } = useStore();
   const [loading, setLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
   const [errorMessageEmail, setErrorMessageEmail] = useState<string>('');
@@ -54,7 +54,8 @@ const Login = () => {
     } else {
       setTimeout(() => {
         setLoading(false);
-        
+        setEmailStore(email);
+        setTokenStore(response.data?.token);
         navigation.navigate('Home');
       }, 3000);
     }
