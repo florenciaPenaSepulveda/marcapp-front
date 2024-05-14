@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../Router';
 import { Button } from 'react-native-elements';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Loading = () => {
   const navigation =
@@ -20,7 +21,12 @@ const Loading = () => {
     console.log(res.status)
 
     if (res.status === 200) {
-      navigation.navigate('Login');
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        navigation.navigate('Home');
+      } else {
+        navigation.navigate('Login');
+      }
     } else {
       setLoading(false);
       setErrorMessage('Problemas al conectar con el servidor');

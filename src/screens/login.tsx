@@ -17,7 +17,7 @@ const loginSchema = Joi.object({
 const Login = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { setEmail: setEmailStore } = useStore();
+  const { setEmail: setEmailStore, setToken: setTokenStore } = useStore();
   const [loading, setLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
   const [errorMessageEmail, setErrorMessageEmail] = useState<string>('');
@@ -50,7 +50,7 @@ const Login = () => {
     const response = await loginService(payload);
     console.log('Después');
     console.log('Response.data.pass: ' + response.data?.pass);
-    console.log('Response JSON: ' + JSON.stringify(response.data?.pass));
+    console.log('Response JSON: ' + JSON.stringify(response.data?.token));
     
     
     if(!response?.success) {
@@ -61,6 +61,7 @@ const Login = () => {
       setTimeout(() => {
         setLoading(false);
         setEmailStore(email);
+        setTokenStore(response.data?.token);
         navigation.navigate('Home');
       }, 3000);
     }
