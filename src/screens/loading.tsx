@@ -17,15 +17,21 @@ const Loading = () => {
 
   const getHealthcheck = async () => {
     setLoading(true);
-    const res = await healthcheckService();
-    console.log(res.status)
+    const url: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}`;
+    console.log("URL UserMS: ", url);
 
-    if (res.status === 200) {
+    const url2: string = `${process.env.EXPO_PUBLIC_MS_MARCAJE_URL}`;
+    console.log("URL MarcajeMS:" , url2)
+    const res = await healthcheckService(url);
+    const res2 = await healthcheckService(url2);
+
+    if ((res.status === 200) && (res2.status === 200)) {
       const token = await AsyncStorage.getItem('token');
       if (token) {
         navigation.navigate('Home');
       } else {
-        navigation.navigate('Login');
+       //navigation.navigate('Login');
+       navigation.navigate('Home');
       }
     } else {
       setLoading(false);

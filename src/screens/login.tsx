@@ -8,6 +8,7 @@ import useStore from '../stores/useStore';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import loginService from '../services/login.service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const loginSchema = Joi.object({
   email: Joi.string().min(1).max(30),
@@ -47,6 +48,11 @@ const Login = () => {
     const payload = { email, password };
     setLoading(true);
     const response = await loginService(payload);
+    if(response.success) {
+      await AsyncStorage.setItem('tokenLogin', response?.data.access_token);
+      const storedToken = await AsyncStorage.getItem('tokenLogin');
+      console.log('Print Token: ', storedToken);      
+    }
     
     if(!response?.success) {
       console.error('Error de autenticación:', response?.message);
@@ -54,8 +60,7 @@ const Login = () => {
     } else {
       setTimeout(() => {
         setLoading(false);
-        setEmailStore(email);
-        setTokenStore(response.data?.token);
+        
         navigation.navigate('Home');
       }, 3000);
     }
