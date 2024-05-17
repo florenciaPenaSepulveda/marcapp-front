@@ -8,23 +8,30 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import marcajeService from '../services/marcaje.service';
+
 
 const Home = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { email } = useStore();
+  const [ marcaje, setmarcaje ] = useState({ date: '', id: 0, id_user: 0});
+  const getMarcaje = async () => {
+    try {
+      console.log("Dentro de home")
+      const marcaje = await marcajeService();
+      console.log("Despues de marcaje Service en home")
+      if(marcaje?.success) {
+        console.log(marcaje.data)
+        setmarcaje(marcaje.data);
+      }
+    } catch (error) {
+      console.log("Ocurrió un problema")
+    }
+  }
 
   useEffect(() => {
-    const getData = async () => {
-      try {
-        const token = await AsyncStorage.getItem('tokenLogin');
-        console.log("Token dentro de home: ", token);
-      } catch (error) {
-        console.log("Algo falló al obtener el token:", error);
-      }
-    };
-
-    getData();
+    getMarcaje();
   }, []);
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -59,8 +66,17 @@ const Home = () => {
         }}
       >
         <Button title="View Profile" loading={loading} />
-        <Button title="Add Time Registration" loading={loading} />
+        <Button title="Add Time Registration"
+        loading={loading} 
+        onPress={getMarcaje}/>
       </View>
+      {(marcaje.id != 0 ) && (marcaje.date != '' ) && (marcaje.id_user != 0) && (
+        <View style={{ marginTop: 20}}>
+          <Text>Último Marcaje Creado</Text>
+          <Text>ID Marcaje: {marcaje.id} </Text>
+          <Text>Fecha: {marcaje.date} </Text>
+        </View>
+      ) }
     </Box>
   );
 };
