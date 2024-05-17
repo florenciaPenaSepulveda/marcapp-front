@@ -96,7 +96,7 @@ const Login = () => {
       />
       <Input
         secureTextEntry
-        label="Contraseña"
+        label="Password"
         placeholder="********"
         errorMessage={errorMessagePassword}
         onChangeText={(value: string) => setPassword(value)}
@@ -113,7 +113,18 @@ const Login = () => {
           onPress={() => navigation.navigate('Register')}
           style={{ textAlign: 'center', marginTop: '10%' }}
         >
-          Crear cuenta
+          Sign Up
+        </Text>
+      </View>
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 16,
+          alignSelf: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 12, color: 'gray' }}>
+          © 2024 Palta con Pan. All rights reserved.
         </Text>
       </View>
     </View>
