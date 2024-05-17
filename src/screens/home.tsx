@@ -16,22 +16,24 @@ const Home = () => {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { email } = useStore();
   const [ marcaje, setmarcaje ] = useState({ date: '', id: 0, id_user: 0});
+
   const getMarcaje = async () => {
     try {
-      console.log("Dentro de home")
+      setLoading(true);
       const marcaje = await marcajeService();
       console.log("Despues de marcaje Service en home")
       if(marcaje?.success) {
         console.log(marcaje.data)
         setmarcaje(marcaje.data);
+        setLoading(false);
       }
     } catch (error) {
       console.log("Ocurrió un problema")
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    getMarcaje();
   }, []);
 
   const [loading, setLoading] = useState<boolean>(false);
