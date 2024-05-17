@@ -76,13 +76,22 @@ const Register = () => {
       </AlertDialog>
       <VStack space={4} alignItems="center">
         <Center>
-          <Text>MarcApp</Text>
+          <Text
+          style={{
+            fontSize: 18,
+            textAlign: 'center',
+            fontWeight: '700',
+            marginVertical: '10%',
+          }}
+        >
+          MarcApp
+        </Text>
         </Center>
         <Center>
           <Input
             size="l"
             variant="outline"
-            placeholder="Nombre"
+            placeholder="First name"
             value={data?.first_name}
             onChange={(e) => setValue('first_name', e?.nativeEvent?.text as string)}
           />
@@ -91,7 +100,7 @@ const Register = () => {
           <Input
             size="l"
             variant="outline"
-            placeholder="Apellido"
+            placeholder="Last name"
             value={data?.last_name}
             onChange={(e) =>
               setValue('last_name', e?.nativeEvent?.text as string)
@@ -112,7 +121,7 @@ const Register = () => {
             size="l"
             type="password"
             variant="outline"
-            placeholder="Contraseña"
+            placeholder="Password"
             value={data?.pass}
             onChange={(e) =>
               setValue('pass', e?.nativeEvent?.text as string)
@@ -123,7 +132,7 @@ const Register = () => {
           <Input
             size="l"
             variant="outline"
-            placeholder="Fecha de nacimiento"
+            placeholder="Birthday (YYYY-MM-DD)"
             value={data?.birthday}
             onChange={(e) =>
               setValue('birthday', e?.nativeEvent?.text as string)
@@ -132,7 +141,7 @@ const Register = () => {
         </Center>
         <Center>
           <Button isLoading={loading} onPress={onClickButton}>
-            Crear cuenta
+            Create account
           </Button>
         </Center>
         <Center>
@@ -140,7 +149,7 @@ const Register = () => {
             style={{ marginTop: '5%' }}
             onPress={() => navigation.navigate('Login')}
           >
-            Ya tengo cuenta
+            I already have an account
           </Text>
         </Center>
       </VStack>

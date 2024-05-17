@@ -1,10 +1,17 @@
-import React, { useEffect } from 'react';
-import { Box } from 'native-base'; // Importa el componente Box de native-base
-import useStore from '../stores/useStore'; // Ajusta la ruta según tu estructura de archivos
+import { useEffect, useState } from 'react';
+import { TouchableOpacity, View } from 'react-native';
+import { Box } from 'native-base';
+import { Button, Text } from 'react-native-elements';
+import 'text-encoding-polyfill';
+import useStore from '../stores/useStore';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../Router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StyleSheet, View, Text, Alert, Button } from 'react-native';
 
 const Home = () => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { email } = useStore();
 
   useEffect(() => {
@@ -20,41 +27,42 @@ const Home = () => {
     getData();
   }, []);
 
-
+  const [loading, setLoading] = useState<boolean>(false);
   return (
-    <View>
-      <Text style={styles.title}>
-        The title and onPress handler are required. It is recommended to set
-        accessibilityLabel to help make your app usable by everyone.
-      </Text>
-      <Button
-        title="Press me"
-        onPress={() => Alert.alert('Simple Button pressed')}
-      />
-    </View>
+    <Box
+      style={{
+        flex: 1,
+        alignContent: 'center',
+        justifyContent: 'flex-start',
+        backgroundColor: 'white',
+        paddingHorizontal: '10%',
+        paddingVertical: '5%'
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 24,
+          textAlign: 'center',
+          fontWeight: '700',
+          marginVertical: '10%',
+        }}
+      >
+        Nice to see you again, {email}!
+        </Text>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'row',
+          gap: 16,
+        }}
+      >
+        <Button title="View Profile" loading={loading} />
+        <Button title="Add Time Registration" loading={loading} />
+      </View>
+    </Box>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    marginHorizontal: 16,
-  },
-  title: {
-    textAlign: 'center',
-    marginVertical: 8,
-  },
-  fixToText: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  separator: {
-    marginVertical: 8,
-    borderBottomColor: '#737373',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-});
-
 
 export default Home;
