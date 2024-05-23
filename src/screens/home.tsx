@@ -3,7 +3,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Text } from 'react-native-elements';
 import 'text-encoding-polyfill';
-import useStore from '../stores/useStore';
+import useUserStore from '../stores/useStore';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
@@ -14,7 +14,7 @@ import marcajeService from '../services/marcaje.service';
 const Home = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { email } = useStore();
+  const { email } = useUserStore();
   const [ marcaje, setmarcaje ] = useState({ date: '', id: 0, id_user: 0});
 
   const getMarcaje = async () => {
@@ -31,6 +31,10 @@ const Home = () => {
       console.log("Ocurrió un problema")
       setLoading(false);
     }
+  }
+
+  const goProfile = () => {
+    navigation.navigate("Profile");
   }
 
   useEffect(() => {
@@ -67,7 +71,9 @@ const Home = () => {
           gap: 16,
         }}
       >
-        <Button title="View Profile" loading={loading} />
+        <Button title="View Profile" 
+        loading={loading}
+        onPress={goProfile}/>
         <Button title="Add Time Registration"
         loading={loading} 
         onPress={getMarcaje}/>

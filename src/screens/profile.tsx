@@ -3,15 +3,31 @@ import { TouchableOpacity, View } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Text } from 'react-native-elements';
 import 'text-encoding-polyfill';
-import useStore from '../stores/useStore';
+import useUserStore from '../stores/useStore';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
+import profileService from '../services/profile.service';
+import { useStore } from 'zustand';
+
 
 const Profile = () => {
+    const userStore = useUserStore();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const { email } = useStore();
-    const [loading, setLoading] = useState<boolean>(false);
+    useEffect(() => {
+        const getUser = async () => {
+            try {
+                const profile = await profileService();
+                if(!profile?.success) {
+                    console.log("Fallo");
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+        getUser();
+    }, [])
+
     return (
         <Box
         style={{
@@ -31,7 +47,9 @@ const Profile = () => {
             marginVertical: '10%',
             }}
         >
-            This is the user profile
+            {userStore.firstName} {userStore.lastName}
+            Correo: {userStore.email}
+            Cumpleaños: {userStore.birthday}
             </Text>
         <View
             style={{
@@ -42,9 +60,9 @@ const Profile = () => {
             gap: 16, // Ajusta este valor para cambiar el espacio entre los botones
             }}
         >
-            <Button title="View Profile" loading={loading} />
-            <Button title="Add Time Registration" loading={loading} />
         </View>
         </Box>
     );
 }
+
+export default Profile;
