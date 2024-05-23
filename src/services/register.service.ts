@@ -12,7 +12,6 @@ const registerService = async (
   try {
     const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/register`;
     const response = await axios.post(endpoint, data);
-    console.log(JSON.stringify(data));
     return { success: true, data: response.data };
     
   } catch (error: unknown) {

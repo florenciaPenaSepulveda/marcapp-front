@@ -30,8 +30,8 @@ const Loading = () => {
       if (token) {
         navigation.navigate('Home');
       } else {
-       //navigation.navigate('Login');
-       navigation.navigate('Home');
+       navigation.navigate('Login');
+       //navigation.navigate('Home');
       }
     } else {
       setLoading(false);

@@ -18,8 +18,6 @@ const marcajeService = async () => {
     const endpoint: string = `${process.env.EXPO_PUBLIC_MS_MARCAJE_URL}/marcaje`;
     console.log(endpoint);
     const authToken = await getData();
-    console.log("------------")
-    console.log(authToken);
 
     if(authToken != null) {
         const response = await axios.post(endpoint, {

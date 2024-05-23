@@ -4,11 +4,12 @@ import { Button, Input, Text } from 'react-native-elements';
 import 'text-encoding-polyfill';
 import Joi from 'joi';
 import { useNavigation } from '@react-navigation/native';
-import useStore from '../stores/useStore';
+import useUserStore from '../stores/useStore';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import loginService from '../services/login.service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const loginSchema = Joi.object({
   email: Joi.string().min(1).max(30),
@@ -18,7 +19,6 @@ const loginSchema = Joi.object({
 const Login = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { setEmail: setEmailStore, setToken: setTokenStore } = useStore();
   const [loading, setLoading] = useState<boolean>(false);
   const [email, setEmail] = useState<string>('');
   const [errorMessageEmail, setErrorMessageEmail] = useState<string>('');
