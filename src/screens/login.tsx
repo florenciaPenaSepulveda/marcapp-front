@@ -10,6 +10,7 @@ import { RootStackParamList } from '../../Router';
 import loginService from '../services/login.service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 const loginSchema = Joi.object({
   email: Joi.string().min(1).max(30),
   password: Joi.string().min(2).max(30),

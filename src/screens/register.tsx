@@ -5,6 +5,8 @@ import { AlertDialog } from 'native-base';
 import { useNavigation } from '@react-navigation/core';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
+import { Calendar } from 'react-native-calendars'
+
 
 type FormDataT = {
   first_name: string;
@@ -145,6 +147,11 @@ const Register = () => {
           </Button>
         </Center>
         <Center>
+        <Calendar
+            onDayPress={day => {
+                console.log('selected day', day);
+            }}
+            />
           <Text
             style={{ marginTop: '5%' }}
             onPress={() => navigation.navigate('Login')}
