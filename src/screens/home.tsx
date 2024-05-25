@@ -14,7 +14,7 @@ import marcajeService from '../services/marcaje.service';
 const Home = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { email } = useUserStore();
+  const { firstName } = useUserStore();
   const [ marcaje, setmarcaje ] = useState({ date: '', id: 0, id_user: 0});
 
   const getMarcaje = async () => {
@@ -60,7 +60,7 @@ const Home = () => {
           marginVertical: '10%',
         }}
       >
-        Nice to see you again, {email}!
+        Nice to see you again, {firstName}!
         </Text>
       <View
         style={{
@@ -71,12 +71,8 @@ const Home = () => {
           gap: 16,
         }}
       >
-        <Button title="View Profile" 
-        loading={loading}
-        onPress={goProfile}/>
-        <Button title="Add Time Registration"
-        loading={loading} 
-        onPress={getMarcaje}/>
+        <Button title="View Profile" onPress={goProfile} loading={loading}/>
+        <Button title="Add Time Registration" onPress={getMarcaje} loading={loading}/>
       </View>
       {(marcaje.id != 0 ) && (marcaje.date != '' ) && (marcaje.id_user != 0) && (
         <View style={{ marginTop: 20}}>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Box } from 'native-base';
-import { Button, Text } from 'react-native-elements';
+import { Button, Header, Text } from 'react-native-elements';
 import 'text-encoding-polyfill';
 import useUserStore from '../stores/useStore';
 import { useNavigation } from '@react-navigation/native';
@@ -9,7 +9,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import marcajeService from '../services/marcaje.service';
 
-const TimeRegistration = () => { 
+const Marcaje = () => { 
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const { email } = useUserStore();
     const [ marcaje, setmarcaje ] = useState({ date: '', id: 0, id_user: 0});
@@ -42,6 +42,15 @@ const TimeRegistration = () => {
             paddingVertical: '5%'
         }}
         >
+        <Header
+            centerComponent={{ text: 'Time registration', style: { color: '#fff',
+            fontWeight: 'bold', fontSize: 20
+            } }}
+            containerStyle={{
+                backgroundColor: '#0AA5F2',
+                justifyContent: 'space-around',
+            }}
+        />  
         <Text
             style={{
             fontSize: 24,
@@ -66,6 +75,6 @@ const TimeRegistration = () => {
         </View>
         </Box>
     );
-    }
+}
 
-export default TimeRegistration;
+export default Marcaje;

@@ -142,6 +142,9 @@ const Register = () => {
           />
         </Center>
         <Center>
+          {/* FORMATO COMENTARIOS EN TSX
+            */
+          } 
           <Button isLoading={loading} onPress={onClickButton}>
             Create account
           </Button>

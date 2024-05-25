@@ -65,7 +65,7 @@ const Loading = () => {
             {errorMessage}
           </Text>
           <Button
-            title={'Volver a intentar'}
+            title={'Try again'}
             onPress={() => getHealthcheck()}
           />
         </View>
