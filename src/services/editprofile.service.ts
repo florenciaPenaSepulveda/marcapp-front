@@ -17,7 +17,7 @@ const editService = async (
       message: response.data.message,
     };
   } catch (error: unknown) {
-    return { success: false, message: 'There was a problem' };
+    return { success: false, message: 'Something went wrong. Try again later.' };
   }
 };
 

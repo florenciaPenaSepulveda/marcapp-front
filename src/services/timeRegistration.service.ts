@@ -13,9 +13,9 @@ const getData = async() => {
     }
   };
 
-const marcajeService = async () => {
+const timeRegistrationService = async () => {
   try {
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_MARCAJE_URL}/marcaje`;
+    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/timeRegistration`;
     console.log(endpoint);
     const authToken = await getData();
 
@@ -29,14 +29,14 @@ const marcajeService = async () => {
             return { success: true, data: response.data };
           } else {
             console.log("Error del servidor")
-            return { success: false, message: 'Error del servidor' };
+            return { success: false, message: 'Server error' };
           }
     } 
     
   } catch (error: unknown) {
-    return { success: false, message: 'Token inválido' };
+    return { success: false, message: 'Invalid token' };
   }
 };
-export default marcajeService;
+export default timeRegistrationService;
 
 //TENGO TOKEN, NECESITO RUTA PARA CREAR MARCAJE
