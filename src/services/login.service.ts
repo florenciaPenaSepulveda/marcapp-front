@@ -1,5 +1,11 @@
 import axios from 'axios';
 import { AxiosError } from 'axios';
+import useTokenStore from '../stores/tokenStore';
+
+async function guardarToken(token: string) {
+  const tokenStore = useTokenStore.getState(); //para que no sea reactivo (Sólo se actualice cuando se llame a la función)
+  tokenStore.setToken(token);
+}
 
 const loginService = async (payload: { email: string; password: string }) => {
   try {
@@ -10,7 +16,9 @@ const loginService = async (payload: { email: string; password: string }) => {
     });
     
     if(response?.status === 200) {
-      return { success: true, data: response.data };
+      console.log("Token recibido:", response.data.access_token);
+      guardarToken(response.data.access_token);
+      return { success: true};
     } else {
       console.log("Error del servidor")
       return { success: false, message: 'Error del servidor' };
