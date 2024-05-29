@@ -9,23 +9,30 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import timeRegistrationService from '../services/timeRegistration.service';
 
+interface MarcajeDto {
+  id: number,
+  id_user: number,
+  date: string,
+  type: string,
+}
+
 const TimeRegistration = () => { 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const userStore = useUserStore();
   const { email, firstName } = userStore;
-  const [timeRegistration, setTimeRegistration] = useState({ date: '', id: 0, id_user: 0 });
+  const [timeRegistration, setTimeRegistration] = useState({ date: '', id: 0, id_user: 0, type: '' });
   const [loading, setLoading] = useState<boolean>(false);
-  const [registrationType, setRegistrationType] = useState<string>('');
 
   const getArrival = async () => {
     try {
       setLoading(true);
       const response = await timeRegistrationService();
-      console.log("Después de marcaje Service en llegada");
       if(response?.success) {
         console.log(response.data);
-        setTimeRegistration(response.data);
-        setRegistrationType('arrival');
+        setTimeRegistration(response.data as MarcajeDto);
+        setLoading(false);
+      } else {
+        console.log(response?.message);
         setLoading(false);
       }
     } catch (error) {
@@ -38,11 +45,9 @@ const TimeRegistration = () => {
     try {
       setLoading(true);
       const response = await timeRegistrationService();
-      console.log("Después de marcaje Service en salida");
       if(response?.success) {
         console.log(response.data);
-        setTimeRegistration(response.data);
-        setRegistrationType('exit');
+        setTimeRegistration(response.data as MarcajeDto);
         setLoading(false);
       }
     } catch (error) {
@@ -105,7 +110,7 @@ const TimeRegistration = () => {
 
       {(timeRegistration.id !== 0 && timeRegistration.date !== '' && timeRegistration.id_user !== 0) && (
         <View style={styles.registrationInfo}>
-          <Text>{firstName}, your {registrationType === 'arrival' ? 'check-in' : 'check-out'} has been registered at {timeRegistration.date}</Text>
+          <Text>{firstName}, your {timeRegistration.type} has been registered at {timeRegistration.date}</Text>
           <Text>Registration ID: {timeRegistration.id} </Text>
         </View>
       )}

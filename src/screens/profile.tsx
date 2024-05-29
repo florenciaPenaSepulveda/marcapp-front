@@ -13,7 +13,7 @@ import moment from 'moment';
 import { StyleSheet } from 'react-native';
 
 const Profile = () => {
-    const userStore = useUserStore();
+    const userStore = useUserStore.getState();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const birthday = new Date(userStore.birthday);
 

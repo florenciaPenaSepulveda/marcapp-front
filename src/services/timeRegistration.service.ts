@@ -1,10 +1,31 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { AxiosError } from 'axios';
+import useTokenStore from '../stores/tokenStore';
 
+interface MarcajeDto {
+  id: number,
+  id_user: number,
+  date: string,
+  type: string,
+}
+
+interface SuccessResponseDto {
+  success: boolean,
+  data: MarcajeDto,
+}
+
+interface FailureResponseDto {
+  success: boolean,
+  message: string
+}
+
+
+/*
 const getData = async() => {
     try {
-      const token = await AsyncStorage.getItem('tokenLogin');
+      const tokenStore =  useTokenStore();
+      const token =  tokenStore.token;
       console.log("Token dentro de home: ", token);
       return token;
     } catch (error) {
@@ -12,24 +33,31 @@ const getData = async() => {
       return null;
     }
   };
+*/
 
 const timeRegistrationService = async () => {
   try {
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/timeRegistration`;
+    const tokenStore = useTokenStore.getState();
+    const authToken = tokenStore.token;
+    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/marcaje`;
     console.log(endpoint);
-    const authToken = await getData();
+    console.log("Token almacenado en Store: ", authToken);
 
     if(authToken != null) {
         const response = await axios.post(endpoint, {
             token: authToken
         });
-
-        if(response?.status === 201) {
-            console.log(response.data);
-            return { success: true, data: response.data };
+        console.log('Respuesta:', response.data);
+        console.log("Token no nulo")
+        if(response.data.success) {
+            const okResponse: SuccessResponseDto = response.data;
+            console.log("Response data :", okResponse.data);
+            const marcaje: MarcajeDto = okResponse.data;
+            return { success: true, data: marcaje };
           } else {
-            console.log("Error del servidor")
-            return { success: false, message: 'Server error' };
+            const badResponse: FailureResponseDto = response.data;
+            console.log("Mensaje de error:", badResponse.message);
+            return { success: false, message: badResponse.message };
           }
     } 
     
