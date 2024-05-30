@@ -15,7 +15,6 @@ const Home = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { firstName } = useUserStore();
-  const [ timeRegistration, setTimeRegistration ] = useState({ date: '', id: 0, id_user: 0});
 
   const goProfile = () => {
     navigation.navigate("Profile");

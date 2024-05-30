@@ -29,13 +29,18 @@ const Profile = () => {
   const goEdit = () => {
     navigation.navigate("EditProfile");
   }
+
+  const goHome = () => {
+    navigation.navigate("Home");
+  }
   
+  /*
   useEffect(() => {
     const getUser = async () => {
       try {
         const profile = await profileService();
         if (!profile?.success) {
-          console.log('Fallo');
+          console.log('Fallo obtención del usuario');
         }
       } catch (error) {
         console.log(error);
@@ -43,6 +48,7 @@ const Profile = () => {
     };
     getUser();
   }, []);
+  */
 
 const renderProfilePicture = (name: string) => {
     const initial = name.charAt(0).toUpperCase();
@@ -74,6 +80,7 @@ return (
         </Text>
 
         <Button title = "Edit Profile" onPress={goEdit} loading = {loading} />
+        <Button title = "Go Home" onPress={goHome} loading = {loading} />
             <View
                 style={{
                 flexDirection: 'column',

@@ -54,7 +54,7 @@ const Login = () => {
       setTimeout(() => {
         setLoading(false);
         
-        navigation.navigate('Home');
+        navigation.navigate('Profile');
       }, 3000);
     }
     

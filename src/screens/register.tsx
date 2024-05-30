@@ -9,16 +9,16 @@ import { Calendar } from 'react-native-calendars'
 
 
 type FormDataT = {
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   pass: string;
   birthday: string;
 };
 
 const InitData = {
-  first_name: '',
-  last_name: '',
+  firstName: '',
+  lastName: '',
   email: '',
   pass: '',
   birthday: '',
@@ -52,7 +52,7 @@ const Register = () => {
   
     if (response?.success) {
       setData(InitData);
-      navigation.navigate('Home');
+      navigation.navigate('Login');
     }
   };
 
@@ -94,8 +94,8 @@ const Register = () => {
             size="l"
             variant="outline"
             placeholder="First name"
-            value={data?.first_name}
-            onChange={(e) => setValue('first_name', e?.nativeEvent?.text as string)}
+            value={data?.firstName}
+            onChange={(e) => setValue('firstName', e?.nativeEvent?.text as string)}
           />
         </Center>
         <Center>
@@ -103,9 +103,9 @@ const Register = () => {
             size="l"
             variant="outline"
             placeholder="Last name"
-            value={data?.last_name}
+            value={data?.lastName}
             onChange={(e) =>
-              setValue('last_name', e?.nativeEvent?.text as string)
+              setValue('lastName', e?.nativeEvent?.text as string)
             }
           />
         </Center>

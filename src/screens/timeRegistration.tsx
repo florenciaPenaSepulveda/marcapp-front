@@ -28,11 +28,11 @@ const TimeRegistration = () => {
       setLoading(true);
       const response = await timeRegistrationService();
       if(response?.success) {
-        console.log(response.data);
+        console.log('Respuesta exitosa de marcaje:',response.data);
         setTimeRegistration(response.data as MarcajeDto);
         setLoading(false);
       } else {
-        console.log(response?.message);
+        console.log('Respuesta fallida de marcaje:',response?.message);
         setLoading(false);
       }
     } catch (error) {

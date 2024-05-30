@@ -47,8 +47,7 @@ const timeRegistrationService = async () => {
         const response = await axios.post(endpoint, {
             token: authToken
         });
-        console.log('Respuesta:', response.data);
-        console.log("Token no nulo")
+        console.log('Respuesta de MS_Marcaje en timeRegistration:', response.data);
         if(response.data.success) {
             const okResponse: SuccessResponseDto = response.data;
             console.log("Response data :", okResponse.data);

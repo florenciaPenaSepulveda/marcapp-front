@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import useUserStore from '../stores/useStore';
+import useTokenStore from '../stores/tokenStore';
 
 interface ResponseDto {
     birthday: string;
@@ -28,7 +29,7 @@ interface ResponseDto {
 
 const getData = async() => {
     try {
-      const token = await AsyncStorage.getItem('tokenLogin');
+      const token = useTokenStore.getState().token;
       return token;
     } catch (error) {
       console.log("Algo falló al obtener el token:", error);
@@ -50,6 +51,7 @@ const profileService = async () => {
       return { success: true }    
     
   } catch (error: unknown) {
+    console.log("Token inválido en profile Service")
     return { success: false, message: 'Token inválido' };
   }
 };
