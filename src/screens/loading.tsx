@@ -20,8 +20,8 @@ const Loading = () => {
     const url: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}`;
     console.log("URL UserMS: ", url);
 
-    const url2: string = `${process.env.EXPO_PUBLIC_MS_MARCAJE_URL}`;
-    console.log("URL MarcajeMS:" , url2)
+    const url2: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}`;
+    console.log("URL TimeRegistrationMS:" , url2)
     const res = await healthcheckService(url);
     const res2 = await healthcheckService(url2);
 
@@ -65,7 +65,7 @@ const Loading = () => {
             {errorMessage}
           </Text>
           <Button
-            title={'Volver a intentar'}
+            title={'Try again'}
             onPress={() => getHealthcheck()}
           />
         </View>

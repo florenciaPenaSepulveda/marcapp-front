@@ -4,11 +4,9 @@ import { Button, Input, Text } from 'react-native-elements';
 import 'text-encoding-polyfill';
 import Joi from 'joi';
 import { useNavigation } from '@react-navigation/native';
-import useUserStore from '../stores/useStore';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import loginService from '../services/login.service';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const loginSchema = Joi.object({
@@ -48,11 +46,6 @@ const Login = () => {
     const payload = { email, password };
     setLoading(true);
     const response = await loginService(payload);
-    if(response.success) {
-      await AsyncStorage.setItem('tokenLogin', response?.data.access_token);
-      const storedToken = await AsyncStorage.getItem('tokenLogin');
-      console.log('Print Token: ', storedToken);      
-    }
     
     if(!response?.success) {
       console.error('Error de autenticación:', response?.message);
@@ -61,7 +54,7 @@ const Login = () => {
       setTimeout(() => {
         setLoading(false);
         
-        navigation.navigate('Home');
+        navigation.navigate('Profile');
       }, 3000);
     }
     
