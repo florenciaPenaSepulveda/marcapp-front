@@ -8,6 +8,7 @@ import TimeRegistration from './src/screens/timeRegistration';
 import Profile from './src/screens/profile';
 import EditProfile from './src/screens/editProfile';
 import WeeklySummary from './src/screens/weeklySummary';
+import SearchWorker from './src/screens/searchWorker'; // Importa la pantalla SearchWorker
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -20,6 +21,7 @@ export type RootStackParamList = {
   TimeRegistration: { timeRegistration?: { date: string; id: number; id_user: number } } | undefined;
   EditProfile: Record<string, string> | undefined;
   WeeklySummary: Record<string, string> | undefined;
+  SearchWorker: undefined; // Agrega la pantalla SearchWorker
 };
 
 const RouterProvider = () => {
@@ -60,6 +62,11 @@ const RouterProvider = () => {
           options={{ headerShown: false }}
           name="WeeklySummary"
           component={WeeklySummary}
+        />
+         <Stack.Screen
+          options={{ headerShown: false }}
+          name="SearchWorker" // Asegúrate de que el nombre de la pantalla coincida con "SearchWorker"
+          component={SearchWorker}
         />
         <Stack.Screen name="Home" component={Home} />
       </Stack.Navigator>

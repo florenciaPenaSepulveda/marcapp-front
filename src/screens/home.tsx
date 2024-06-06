@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+// Importar useState
+import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Text } from 'react-native-elements';
@@ -9,7 +10,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import timeRegistrationService from '../services/timeRegistration.service';
-
+import searchWorkerService from '../services/searchWorker.service'
 
 const Home = () => {
   const navigation =
@@ -24,10 +25,16 @@ const Home = () => {
     navigation.navigate("TimeRegistration");
   }
 
-  useEffect(() => {
-  }, []);
+  const goSearchWorker = () => {
+    navigation.navigate("SearchWorker");
+  }
 
   const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Aquí puedes realizar cualquier operación de carga inicial si es necesario
+  }, []);
+
   return (
     <Box
       style={{
@@ -48,7 +55,7 @@ const Home = () => {
         }}
       >
         Nice to see you again, {firstName}!
-        </Text>
+      </Text>
       <View
         style={{
           flex: 1,
@@ -60,6 +67,7 @@ const Home = () => {
       >
         <Button title="View Profile" onPress={goProfile} loading={loading}/>
         <Button title="Add Time Registration" onPress={goTimeRegistration} loading={loading}/>
+        <Button title="Search worker" onPress={goSearchWorker} loading={loading}/>
       </View>
     </Box>
   );
