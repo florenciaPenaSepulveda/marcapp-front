@@ -11,6 +11,7 @@ interface ResponseDto {
     iat: number;
     id: number;  
     lastName: string;
+    role: string;
   }
   
   interface ErrorResponse {
@@ -25,6 +26,8 @@ interface ResponseDto {
     userStore.setLastName(usuario.lastName);
     userStore.setEmail(usuario.email);
     userStore.setBirthday(usuario.birthday);
+    userStore.setRole(usuario.role);
+    
   }
 
 const getData = async() => {
@@ -47,6 +50,7 @@ const profileService = async () => {
                     'Content-Type': 'application/json'
         }
       });
+      console.log(response.data);
       await guardarUsuario(response.data as ResponseDto);
       return { success: true }    
     

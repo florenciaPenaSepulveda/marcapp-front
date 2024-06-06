@@ -13,6 +13,8 @@ type UserStoreT = {
   setEmail: (value: string) => void;
   birthday: string;
   setBirthday: (value: string) => void;
+  role: string;
+  setRole: (value: string) => void;
 };
 
 const useUserStore = create<UserStoreT>()(
@@ -28,6 +30,8 @@ const useUserStore = create<UserStoreT>()(
       setEmail: (value: string) => set({ email: value}),
       birthday: '',
       setBirthday: (value: string) => set({ birthday: value}),
+      role: '',
+      setRole: (value: string) => set({ role: value}),
     }),
     {
       name: "user-store-storage",

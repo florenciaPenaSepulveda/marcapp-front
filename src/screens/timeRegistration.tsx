@@ -32,7 +32,8 @@ const TimeRegistration = () => {
         setTimeRegistration(response.data as MarcajeDto);
         setLoading(false);
       } else {
-        console.log('Respuesta fallida de marcaje:',response?.message);
+        
+        console.error('Respuesta fallida de marcaje:',response?.message);
         setLoading(false);
       }
     } catch (error) {
