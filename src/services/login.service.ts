@@ -11,6 +11,7 @@ interface ResponseDto {
   iat: number;
   id: number;  
   lastName: string;
+  role: string;
 }
 
 interface ErrorResponse {
@@ -37,6 +38,8 @@ async function guardarUsuario(authToken: string) {
       userStore.setLastName(user.lastName);
       userStore.setEmail(user.email);
       userStore.setBirthday(user.birthday);
+      userStore.setRole(user.role);
+      console.log('Rol del usuario: ', user.role);
       
       return { success: true }    
     

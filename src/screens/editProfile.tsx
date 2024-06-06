@@ -9,12 +9,14 @@ import useUserStore from '../stores/useStore';
 import { Header } from 'react-native-elements';
 import { StyleSheet, View } from 'react-native';
 import editService from '../services/editprofile.service';
+import { useStore } from 'zustand';
 
 type FormDataT = {
   first_name: string;
   last_name: string;
   email: string;
   birthday: string;
+  role: string;
 };
 
 const EditProfile = () => {
@@ -24,6 +26,7 @@ const EditProfile = () => {
     last_name: userStore.lastName,
     email: userStore.email,
     birthday: userStore.birthday,
+    role: userStore.role,
   };
   const [data, setData] = useState<FormDataT>(InitData);
   const [alert, setAlert] = useState<boolean>(false);
