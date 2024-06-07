@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Header, Text } from 'react-native-elements';
@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import timeRegistrationService from '../services/timeRegistration.service';
+import getRegistrationStateService from '../services/getRegistrationStateService.service';
 
 interface MarcajeDto {
   id: number,
@@ -22,37 +23,49 @@ const TimeRegistration = () => {
   const { email, firstName } = userStore;
   const [timeRegistration, setTimeRegistration] = useState({ date: '', id: 0, id_user: 0, type: '' });
   const [loading, setLoading] = useState<boolean>(false);
+  const [registrationState, setRegistrationState] = useState<number>(0);
 
-  const getArrival = async () => {
+  // Function to fetch the current registration state
+  const fetchRegistrationState = async () => {
     try {
-      setLoading(true);
-      const response = await timeRegistrationService();
-      if(response?.success) {
-        console.log('Respuesta exitosa de marcaje:',response.data);
-        setTimeRegistration(response.data as MarcajeDto);
-        setLoading(false);
+      const response = await getRegistrationStateService(userStore.id);
+      if (response?.success) {
+        console.log('Cantidad de registros:', response.data)
+        setRegistrationState(response.data);
       } else {
-        
-        console.error('Respuesta fallida de marcaje:',response?.message);
-        setLoading(false);
+        console.error('Failed to fetch registration state:', response?.message);
       }
     } catch (error) {
-      console.log("Ocurrió un problema");
-      setLoading(false);
+      console.log("An error occurred while fetching the registration state");
     }
   }
 
-  const getExit = async () => {
+  useEffect(() => {
+    // Fetch the initial registration state when the component mounts
+    fetchRegistrationState();
+  }, []);
+
+  const handleRegistration = async () => {
     try {
       setLoading(true);
       const response = await timeRegistrationService();
-      if(response?.success) {
-        console.log(response.data);
+      if (response?.success) {
+        console.log('Successful response:', response.data);
         setTimeRegistration(response.data as MarcajeDto);
+        setLoading(false);
+
+        // Update the state based on the current registration state
+        if (registrationState === 0) {
+          setRegistrationState(1);
+        } else if (registrationState === 1) {
+          setRegistrationState(2);
+        }
+      } else {
+        console.error('Failed response:', response?.message);
         setLoading(false);
       }
     } catch (error) {
-      console.log("Ocurrió un problema");
+      console.log("An error occurred");
       setLoading(false);
     }
   }
@@ -61,11 +74,15 @@ const TimeRegistration = () => {
     navigation.navigate("WeeklySummary");
   }
 
-  const [buttons, setButtons] = useState([
-    { title: 'Register Check-in time', onPress: getArrival, position: { top: 20, left: 20 } },
-    { title: 'Register Check-out time', onPress: getExit, position: { top: 20, left: 190 } },
-    { title: 'My Weekly Summary', onPress: goSummary, position: { top: 170, left: 105 } },
-  ]);
+  const getButtonTitle = () => {
+    if (registrationState === 0) {
+      return 'Register Check-in time';
+    } else if (registrationState === 1) {
+      return 'Register Check-out time';
+    } else {
+      return 'Registration Completed';
+    }
+  }
 
   return (
     <Box style={styles.container}>
@@ -96,17 +113,22 @@ const TimeRegistration = () => {
         Please select what would you like to do
       </Text>
       <View style={styles.buttonsContainer}>
-        {buttons.map((button, index) => (
-          <Button
-            key={index}
-            title={button.title}
-            onPress={button.onPress}
-            loading={loading}
-            buttonStyle={styles.button}
-            containerStyle={[styles.buttonContainer, button.position]}
-            titleStyle={styles.buttonTitle} // Aplicar estilo de fuente al texto del botón
-          />
-        ))}
+        <Button
+          title={getButtonTitle()}
+          onPress={handleRegistration}
+          loading={loading}
+          buttonStyle={styles.button}
+          containerStyle={[styles.buttonContainer, { top: 20, left: 20 }]}
+          titleStyle={styles.buttonTitle}
+          disabled={registrationState === 2}
+        />
+        <Button
+          title='My Weekly Summary'
+          onPress={goSummary}
+          buttonStyle={styles.button}
+          containerStyle={[styles.buttonContainer, { top: 170, left: 105 }]}
+          titleStyle={styles.buttonTitle}
+        />
       </View>
 
       {(timeRegistration.id !== 0 && timeRegistration.date !== '' && timeRegistration.id_user !== 0) && (
@@ -134,16 +156,16 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   button: {
-    height: 120, // Puedes ajustar la altura del botón aquí
-    width: 150, // Puedes ajustar el ancho del botón aquí
+    height: 120, // Adjust button height here
+    width: 150, // Adjust button width here
   },
   buttonContainer: {
     position: 'absolute',
   },
   buttonTitle: {
-    fontSize: 19, // Tamaño de la fuente del texto del botón
-    fontWeight: 'bold', // Peso de la fuente del texto del botón
-    color: 'white', // Color del texto del botón
+    fontSize: 19, // Font size for button text
+    fontWeight: 'bold', // Font weight for button text
+    color: 'white', // Text color for button
   },
   registrationInfo: {
     marginTop: 50,
