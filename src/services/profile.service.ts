@@ -20,7 +20,7 @@ interface ResponseDto {
   }
 
   async function guardarUsuario(usuario: ResponseDto) {
-    const userStore = useUserStore.getState(); //para que no sea reactivo (Sólo se actualice cuando se llame a la función)
+    const userStore = useUserStore();//para que no sea reactivo (Sólo se actualice cuando se llame a la función)
     userStore.setId(usuario.id);
     userStore.setFirstName(usuario.firstName);
     userStore.setLastName(usuario.lastName);

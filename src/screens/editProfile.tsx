@@ -9,56 +9,49 @@ import useUserStore from '../stores/useStore';
 import { Header } from 'react-native-elements';
 import { StyleSheet, View } from 'react-native';
 import editService from '../services/editprofile.service';
-import { useStore } from 'zustand';
 
 type FormDataT = {
-  first_name: string;
-  last_name: string;
-  email: string;
-  birthday: string;
-  role: string;
+  firstName: string;
+  lastName: string;
 };
 
 const EditProfile = () => {
   const userStore = useUserStore();
   const InitData = {
-    first_name: userStore.firstName,
-    last_name: userStore.lastName,
-    email: userStore.email,
-    birthday: userStore.birthday,
-    role: userStore.role,
+    firstName: userStore.firstName,
+    lastName: userStore.lastName,
   };
   const [data, setData] = useState<FormDataT>(InitData);
   const [alert, setAlert] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const cancelRef = useRef(null);
 
-  const setValue = (key: string, value: string) => {
-    setData((prevState) => {
-      return {
-        ...prevState,
-        [key]: value,
-      };
-    });
+  const setValue = (key: keyof FormDataT, value: string) => {
+    setData((prevState) => ({
+      ...prevState,
+      [key]: value,
+    }));
   };
 
   const onEdit = async () => {
     setLoading(true);
-    const response = await editService(data);
-    setLoading(false);
-  
-    setMessage(response?.message || '');
-    setAlert(true);
-  
-    if (response?.success) {
-      userStore.setFirstName(data.first_name);
-      userStore.setLastName(data.last_name);
-      userStore.setEmail(data.email);
-      userStore.setBirthday(data.birthday);
-      navigation.navigate('Profile');
+    try {
+      const response = await editService(data);
+      setLoading(false);
+
+      if (response.success) {
+        setMessage(response.message || 'Profile updated successfully');  
+        userStore.setFirstName(data.firstName);
+        userStore.setLastName(data.lastName);
+        setAlert(true);
+        navigation.navigate('Profile');
+      }
+    } catch (error) {
+      setLoading(false);
+      setMessage('Error updating profile. Please try again.');
+      setAlert(true);
     }
   };
 
@@ -98,6 +91,7 @@ const EditProfile = () => {
               marginVertical: '10%',
             }}
           >
+            Edit Your Profile
           </Text>
         </Center>
         <Center>
@@ -106,8 +100,8 @@ const EditProfile = () => {
             size="l"
             variant="outline"
             placeholder="First name"
-            value={data?.first_name}
-            onChange={(e) => setValue('first_name', e?.nativeEvent?.text as string)}
+            value={data.firstName}
+            onChange={(e) => setValue('firstName', e.nativeEvent.text)}
           />
         </Center>
         <Center>
@@ -116,51 +110,26 @@ const EditProfile = () => {
             size="l"
             variant="outline"
             placeholder="Last name"
-            value={data?.last_name}
-            onChange={(e) =>
-              setValue('last_name', e?.nativeEvent?.text as string)
-            }
-          />
-        </Center>
-        <Center>
-          <Input
-            style={styles.input}
-            size="l"
-            variant="outline"
-            placeholder="Email"
-            value={data?.email}
-            onChange={(e) => setValue('email', e?.nativeEvent?.text as string)}
-          />
-        </Center>
-        <Center>
-          <Input
-            style={styles.input}
-            size="l"
-            variant="outline"
-            placeholder="Birthday (YYYY-MM-DD)"
-            value={data?.birthday}
-            onChange={(e) =>
-              setValue('birthday', e?.nativeEvent?.text as string)
-            }
+            value={data.lastName}
+            onChange={(e) => setValue('lastName', e.nativeEvent.text)}
           />
         </Center>
         <View
-        style={{
-          flex: 1,
-          justifyContent: 'flex-start',
-          alignItems: 'flex-start',
-          flexDirection: 'row',
-          gap: 16,
-        }}
-      >
-        <Button isLoading={loading} onPress={onEdit}>
-          Save changes
-        </Button>
-        <Button>
-          Change password?
-        </Button>
-      </View>
-        
+          style={{
+            flex: 1,
+            justifyContent: 'flex-start',
+            alignItems: 'flex-start',
+            flexDirection: 'row',
+            gap: 16,
+          }}
+        >
+          <Button isLoading={loading} onPress={onEdit}>
+            Save changes
+          </Button>
+          <Button>
+            Change password?
+          </Button>
+        </View>
       </VStack>
     </Box>
   );

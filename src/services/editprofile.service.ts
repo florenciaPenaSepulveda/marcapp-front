@@ -1,4 +1,5 @@
 import axios from 'axios';
+import useUserStore from '../stores/useStore';
 
 export type editServiceResponseT = {
   success: boolean;
@@ -7,16 +8,19 @@ export type editServiceResponseT = {
 };
 
 const editService = async (
-  data: Record<string, string>
+  data: { firstName: string; lastName: string }
 ): Promise<editServiceResponseT> => {
   try {
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/editProfile`;
-    const response = await axios.put(endpoint, data);
+    const userStore = useUserStore.getState();
+    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/${userStore.id}`;
+    const response = await axios.patch(endpoint, data);
+    console.log("EditProfile service")
+    console.log(response.data);
     return {
-      success: response.data.success,
-      message: response.data.message,
+      success: true,
     };
-  } catch (error: unknown) {
+  } catch (error) {
+    console.error('Error in editService:', error);
     return { success: false, message: 'Something went wrong. Try again later.' };
   }
 };

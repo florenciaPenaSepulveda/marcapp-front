@@ -73,7 +73,7 @@ return (
             }}
         />
         {renderProfilePicture(userStore.firstName)}
-        <Text style={styles.name}>{userStore.firstName} {userStore.lastName}</Text>
+        <Text style={styles.name}>{useUserStore.getState().firstName} {useUserStore.getState().lastName}</Text>
         <Text style={styles.info}>Email: {userStore.email}</Text>
         <Text style={styles.info}>
             Birthday: {birthday.getUTCDate().toString()} {moment.months(birthday.getUTCMonth())} {birthday.getFullYear().toString()}

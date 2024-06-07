@@ -15,7 +15,7 @@ import searchWorkerService from '../services/searchWorker.service'
 const Home = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { firstName } = useUserStore();
+  const firstName = useUserStore.getState().firstName;
 
   const goProfile = () => {
     navigation.navigate("Profile");
