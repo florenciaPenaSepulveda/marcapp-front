@@ -156,9 +156,6 @@ const EditProfile = () => {
         <Button isLoading={loading} onPress={onEdit}>
           Save changes
         </Button>
-        <Button>
-          Change password?
-        </Button>
       </View>
         
       </VStack>

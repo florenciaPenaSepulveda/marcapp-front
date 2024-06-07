@@ -11,13 +11,13 @@ import timeRegistrationService from '../services/timeRegistration.service';
 import getRegistrationStateService from '../services/getRegistrationStateService.service';
 
 interface MarcajeDto {
-  id: number,
-  id_user: number,
-  date: string,
-  type: string,
+  id: number;
+  id_user: number;
+  date: string;
+  type: string;
 }
 
-const TimeRegistration = () => { 
+const TimeRegistration = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const userStore = useUserStore();
   const { email, firstName, id: userId } = userStore; // Asegúrate de tener el userId en el store
@@ -36,7 +36,7 @@ const TimeRegistration = () => {
         console.error('Failed to fetch registration state:', response?.message);
       }
     } catch (error) {
-      console.log("An error occurred while fetching the registration state");
+      console.log('An error occurred while fetching the registration state');
     }
   };
 
@@ -65,13 +65,13 @@ const TimeRegistration = () => {
         setLoading(false);
       }
     } catch (error) {
-      console.log("An error occurred");
+      console.log('An error occurred');
       setLoading(false);
     }
   };
 
   const goSummary = () => {
-    navigation.navigate("WeeklySummary");
+    navigation.navigate('WeeklySummary');
   };
 
   const getButtonTitle = () => {
@@ -128,7 +128,7 @@ const TimeRegistration = () => {
           onPress={handleRegistration}
           loading={loading}
           buttonStyle={getButtonStyle()}
-          containerStyle={[styles.buttonContainer, { top: 20, left: 20 }]}
+          containerStyle={[styles.buttonContainer, { top: 20, left: 105 }]}
           titleStyle={styles.buttonTitle}
           disabled={registrationState === 2}
         />
@@ -143,13 +143,21 @@ const TimeRegistration = () => {
 
       {timeRegistration && (
         <View style={styles.registrationInfo}>
-          <Text>{firstName}, your {timeRegistration.type} has been registered at {timeRegistration.date}</Text>
-          <Text>Registration ID: {timeRegistration.id} </Text>
+          <Text>
+            {firstName}, your {timeRegistration.type} has been registered at {timeRegistration.date}
+          </Text>
+          <Text>Registration ID: {timeRegistration.id}</Text>
+          {timeRegistration.type === 'entry' && (
+            <Text style={styles.checkInMessage}>You have successfully checked in!</Text>
+          )}
+          {timeRegistration.type === 'exit' && (
+            <Text style={styles.checkOutMessage}>You have successfully checked out!</Text>
+          )}
         </View>
       )}
     </Box>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -184,8 +192,22 @@ const styles = StyleSheet.create({
     color: 'white', // Color del texto del botón
   },
   registrationInfo: {
-    marginTop: 50,
-    alignItems: 'center',
+    fontSize: 20,
+    justifyContent: 'flex-start',
+    fontWeight: '600',
+    marginVertical: '100%',
+    paddingHorizontal: '0%',
+    color: 'gray',
+  },
+  checkInMessage: {
+    color: 'green', // Color del mensaje de Check-in
+    fontWeight: 'bold',
+    marginTop: 1000,
+  },
+  checkOutMessage: {
+    color: 'red', // Color del mensaje de Check-out
+    fontWeight: 'bold',
+    marginTop: 100,
   },
 });
 

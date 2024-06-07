@@ -1,6 +1,6 @@
 // Importar useState
 import React, { useEffect, useState } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Text } from 'react-native-elements';
 import 'text-encoding-polyfill';
@@ -32,7 +32,6 @@ const Home = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    // Aquí puedes realizar cualquier operación de carga inicial si es necesario
   }, []);
 
   return (
@@ -54,23 +53,56 @@ const Home = () => {
           marginVertical: '10%',
         }}
       >
-        Nice to see you again, {firstName}!
+        Nice to see you again on MarcApp, {firstName}!
       </Text>
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'row',
-          gap: 16,
-        }}
-      >
-        <Button title="View Profile" onPress={goProfile} loading={loading}/>
-        <Button title="Add Time Registration" onPress={goTimeRegistration} loading={loading}/>
-        <Button title="Search worker" onPress={goSearchWorker} loading={loading}/>
+      <View style={styles.buttonsContainer}>
+        <Button
+        title="View Profile"
+        onPress={goProfile}
+        loading={loading}
+        buttonStyle={styles.button}
+        containerStyle={[styles.buttonContainer, { top: 150, left: 20 }]}
+        titleStyle={styles.buttonTitle}/>
+
+        <Button 
+        title="Add Time Registration"
+        onPress={goTimeRegistration}
+        loading={loading}
+        buttonStyle={styles.button}
+        containerStyle={[styles.buttonContainer, { top: 150, left: 190 }]}
+        titleStyle={styles.buttonTitle}/>
+
+        <Button 
+        title="Search worker" 
+        onPress={goSearchWorker} 
+        loading={loading}
+        buttonStyle={styles.button}
+        containerStyle={[styles.buttonContainer, { top: 300, left: 105 }]}
+        titleStyle={styles.buttonTitle}
+        />
       </View>
     </Box>
   );
 };
+
+const styles = StyleSheet.create({
+  buttonsContainer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+  },
+  button: {
+    height: 120, // Ajusta la altura del botón aquí
+    width: 150, // Ajusta el ancho del botón aquí
+  },
+  buttonContainer: {
+    position: 'absolute',
+  },
+  buttonTitle: {
+    fontSize: 19, // Tamaño de la fuente del texto del botón
+    fontWeight: 'bold', // Peso de la fuente del texto del botón
+    color: 'white', // Color del texto del botón
+  },
+});
 
 export default Home;
