@@ -20,17 +20,17 @@ interface MarcajeDto {
 const TimeRegistration = () => { 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const userStore = useUserStore();
-  const { email, firstName } = userStore;
-  const [timeRegistration, setTimeRegistration] = useState({ date: '', id: 0, id_user: 0, type: '' });
+  const { email, firstName, id: userId } = userStore; // Asegúrate de tener el userId en el store
+  const [timeRegistration, setTimeRegistration] = useState<MarcajeDto | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [registrationState, setRegistrationState] = useState<number>(0);
 
   // Function to fetch the current registration state
   const fetchRegistrationState = async () => {
     try {
-      const response = await getRegistrationStateService(userStore.id);
+      const response = await getRegistrationStateService(userId);
       if (response?.success) {
-        console.log('Cantidad de registros:', response.data)
+        console.log('Cantidad de registros:', response.data);
         setRegistrationState(response.data);
       } else {
         console.error('Failed to fetch registration state:', response?.message);
@@ -38,7 +38,7 @@ const TimeRegistration = () => {
     } catch (error) {
       console.log("An error occurred while fetching the registration state");
     }
-  }
+  };
 
   useEffect(() => {
     // Fetch the initial registration state when the component mounts
@@ -68,11 +68,11 @@ const TimeRegistration = () => {
       console.log("An error occurred");
       setLoading(false);
     }
-  }
+  };
 
   const goSummary = () => {
     navigation.navigate("WeeklySummary");
-  }
+  };
 
   const getButtonTitle = () => {
     if (registrationState === 0) {
@@ -82,7 +82,17 @@ const TimeRegistration = () => {
     } else {
       return 'Registration Completed';
     }
-  }
+  };
+
+  const getButtonStyle = () => {
+    if (registrationState === 0) {
+      return [styles.button, styles.checkInButton];
+    } else if (registrationState === 1) {
+      return [styles.button, styles.checkOutButton];
+    } else {
+      return styles.button;
+    }
+  };
 
   return (
     <Box style={styles.container}>
@@ -117,7 +127,7 @@ const TimeRegistration = () => {
           title={getButtonTitle()}
           onPress={handleRegistration}
           loading={loading}
-          buttonStyle={styles.button}
+          buttonStyle={getButtonStyle()}
           containerStyle={[styles.buttonContainer, { top: 20, left: 20 }]}
           titleStyle={styles.buttonTitle}
           disabled={registrationState === 2}
@@ -131,7 +141,7 @@ const TimeRegistration = () => {
         />
       </View>
 
-      {(timeRegistration.id !== 0 && timeRegistration.date !== '' && timeRegistration.id_user !== 0) && (
+      {timeRegistration && (
         <View style={styles.registrationInfo}>
           <Text>{firstName}, your {timeRegistration.type} has been registered at {timeRegistration.date}</Text>
           <Text>Registration ID: {timeRegistration.id} </Text>
@@ -156,16 +166,22 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   button: {
-    height: 120, // Adjust button height here
-    width: 150, // Adjust button width here
+    height: 120, // Ajusta la altura del botón aquí
+    width: 150, // Ajusta el ancho del botón aquí
+  },
+  checkInButton: {
+    backgroundColor: 'green', // Color del botón de Check-in
+  },
+  checkOutButton: {
+    backgroundColor: 'red', // Color del botón de Check-out
   },
   buttonContainer: {
     position: 'absolute',
   },
   buttonTitle: {
-    fontSize: 19, // Font size for button text
-    fontWeight: 'bold', // Font weight for button text
-    color: 'white', // Text color for button
+    fontSize: 19, // Tamaño de la fuente del texto del botón
+    fontWeight: 'bold', // Peso de la fuente del texto del botón
+    color: 'white', // Color del texto del botón
   },
   registrationInfo: {
     marginTop: 50,
