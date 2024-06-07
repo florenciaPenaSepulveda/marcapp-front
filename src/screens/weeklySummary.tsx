@@ -14,6 +14,7 @@ interface TimeRegistration {
   date: string;
   id: number;
   id_user: number;
+  type: string;
 }
 
 const WeeklySummary = () => {
@@ -26,7 +27,11 @@ const WeeklySummary = () => {
   const fetchWeeklyData = async () => {
     try {
       setLoading(true);
-      const response = await weeklySummaryService(currentWeek.startOf('isoWeek'), currentWeek.endOf('isoWeek'));
+      const initWeek = currentWeek.startOf('isoWeek').format("DD-MM-YYYY");
+      console.log('Inicio Semana', initWeek);
+      const endWeek = currentWeek.endOf('isoWeek').format("DD-MM-YYYY");
+      console.log('Fin semana', endWeek);
+      const response = await weeklySummaryService(initWeek, endWeek, userStore.id);
       if (response?.success && response.data) {
         setTimeRegistrations(response.data);
       } else {
@@ -92,6 +97,7 @@ const WeeklySummary = () => {
         <View key={index} style={styles.registrationInfo}>
           <Text>Registration {index + 1}: {registration.date}</Text>
           <Text>Registration ID: {registration.id}</Text>
+          <Text>Registration Type: {registration.type}</Text>
         </View>
       ))}
     </Box>

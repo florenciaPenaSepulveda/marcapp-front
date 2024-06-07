@@ -1,48 +1,29 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import moment from 'moment';
 
-const getData = async() => {
-  try {
-    const token = await AsyncStorage.getItem('tokenLogin');
-    console.log("Token dentro de home: ", token);
-    return token;
-  } catch (error) {
-    console.log("Algo falló al obtener el token:", error);
-    return null;
-  }
-};
-
-interface TimeRegistration {
-  date: string;
-  id: number;
-  id_user: number;
+interface PeriodDto {
+  startDate: string;
+  endDate: string;
 }
 
-const weeklySummaryService = async (startDate: moment.Moment, endDate: moment.Moment) => {
+const weeklySummaryService = async (startDate: string, endDate: string, idUser: number) => {
   try {
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/weeklySummary`;
-    const authToken = await getData();
+    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/marcaje/date/${idUser}`;
+    console.log('Entrada:', startDate);
+    console.log('Salida:', endDate);
+    // Convertir las fechas a un objeto PeriodDto
+    const dateInterval: PeriodDto = {
+      startDate:startDate,
+      endDate: endDate
+    };
+    console.log(dateInterval);
+    console.log('antes');
+    const response = await axios.post(endpoint, { dateInterval: dateInterval });
+    console.log('despues');
+    return { success: true, data: response.data}
 
-    if (!authToken) {
-      return { success: false, message: 'Invalid token or not found' };
-    }
-
-    const response = await axios.post<TimeRegistration[]>(endpoint, {
-      token: authToken,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-    });
-
-    if (response?.status === 200) {
-      console.log(response.data);
-      return { success: true, data: response.data };
-    } else {
-      console.log("Error del servidor");
-      return { success: false, message: 'Server error' };
-    }
   } catch (error: unknown) {
-    return { success: false, message: 'Invalid token' };
+    return { success: false, message: 'Ocurrió un problema' };
   }
 };
 
