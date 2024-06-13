@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Header, Text } from 'react-native-elements';
 import 'text-encoding-polyfill';
@@ -93,13 +93,21 @@ const WeeklySummary = () => {
           {">"}
         </Text>
       </View>
-      {timeRegistrations.map((registration, index) => (
-        <View key={index} style={styles.registrationInfo}>
-          <Text>Registration {index + 1}: {registration.date}</Text>
-          <Text>Registration ID: {registration.id}</Text>
-          <Text>Registration Type: {registration.type}</Text>
-        </View>
-      ))}
+      <ScrollView style={styles.scrollView}>
+        {timeRegistrations.length === 0 ? (
+          <Text style={styles.noRegistrationsText}>There are no registrations on this period</Text>
+        ) : (
+          timeRegistrations.map((registration, index) => (
+            <View key={index} style={styles.registrationInfo}>
+              <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
+                {registration.type.toUpperCase()}
+              </Text>
+              <Text>Registration {index + 1}: {registration.date}</Text>
+              <Text>Registration ID: {registration.id}</Text>
+            </View>
+          ))
+        )}
+      </ScrollView>
     </Box>
   );
 };
@@ -143,6 +151,23 @@ const styles = StyleSheet.create({
   registrationInfo: {
     marginTop: 50,
     alignItems: 'center',
+  },
+  entryText: {
+    color: 'green', // Color del texto para 'entry'
+    fontWeight: 'bold',
+  },
+  exitText: {
+    color: 'red', // Color del texto para 'exit'
+    fontWeight: 'bold',
+  },
+  scrollView: {
+    width: '100%',
+  },
+  noRegistrationsText: {
+    fontSize: 18,
+    textAlign: 'center',
+    color: 'gray',
+    marginTop: 20,
   },
 });
 

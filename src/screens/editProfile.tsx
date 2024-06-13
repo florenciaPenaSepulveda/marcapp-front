@@ -115,21 +115,19 @@ const EditProfile = () => {
           />
         </Center>
         <View
-          style={{
-            flex: 1,
-            justifyContent: 'flex-start',
-            alignItems: 'flex-start',
-            flexDirection: 'row',
-            gap: 16,
-          }}
-        >
-          <Button isLoading={loading} onPress={onEdit}>
-            Save changes
-          </Button>
-          <Button>
-            Change password?
-          </Button>
-        </View>
+        style={{
+          flex: 1,
+          justifyContent: 'flex-start',
+          alignItems: 'flex-start',
+          flexDirection: 'row',
+          gap: 16,
+        }}
+      >
+        <Button isLoading={loading} onPress={onEdit}>
+          Save changes
+        </Button>
+      </View>
+        
       </VStack>
     </Box>
   );

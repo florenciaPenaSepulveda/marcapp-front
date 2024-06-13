@@ -80,7 +80,6 @@ return (
         </Text>
 
         <Button title = "Edit Profile" onPress={goEdit} loading = {loading} />
-        <Button title = "Go Home" onPress={goHome} loading = {loading} />
             <View
                 style={{
                 flexDirection: 'column',
