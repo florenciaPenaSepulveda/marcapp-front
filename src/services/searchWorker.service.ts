@@ -16,7 +16,7 @@ const searchWorkerService = async (searchTerm: string) => {
                     'Content-Type': 'application/json'
         }
       });
-
+      console.log(response.data);
     // Procesar la respuesta y devolver los datos
     if (response.status === 201) {
       return { success: true, data: response.data}

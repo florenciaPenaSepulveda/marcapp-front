@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { Box } from 'native-base';
 import { View, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
-import { Button, Header, Text, ListItem } from 'react-native-elements';
+import { Text, ListItem } from 'react-native-elements';
 import searchWorkerService from '../services/searchWorker.service';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import moment from 'moment';
 import weeklySummaryService from '../services/weeklySummary.service';
-import loading from './loading';
 
 type SearchWorkerProps = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -25,7 +23,6 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const [searchResults, setSearchResults] = useState<any[]>([]); // Adjust type as needed
   const [timeRegistrations, setTimeRegistrations] = useState<TimeRegistration[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null); // Store selected user
-  const [loading, setLoading] = useState<boolean>(false);
 
   const handleSearch = async () => {
     try {
@@ -64,20 +61,12 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   };
 
   return (
-    <Box style={styles.container}>
-      <Header
-        centerComponent={{
-          text: 'Search worker',
-          style: {
-            color: '#fff',
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
-        }}
-        containerStyle={{
-          backgroundColor: '#0AA5F2',
-          justifyContent: 'space-around',
-        }}
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Buscar empleado"
+        onChangeText={(text) => setSearchTerm(text)}
+        value={searchTerm}
       />
       <TouchableOpacity style={styles.button} onPress={handleSearch}>
         <Text style={styles.buttonText}>Buscar</Text>
@@ -111,30 +100,24 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           />
         </>
       )}
-    </Box>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    backgroundColor: 'white',
-    paddingHorizontal: '0%',
-    paddingVertical: '0%',
+    padding: 20,
   },
   input: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
     marginBottom: 10,
-    paddingHorizontal: 100,
-    borderRadius: 5,
-    
+    paddingHorizontal: 10,
   },
   button: {
-    backgroundColor: '#0AA5F2',
+    backgroundColor: 'blue',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
