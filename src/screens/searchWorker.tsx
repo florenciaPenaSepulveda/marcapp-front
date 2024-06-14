@@ -19,6 +19,7 @@ interface TimeRegistration {
   type: string;
   latCoordinate: string;
   longCoordinate: string;
+  adminFlag: boolean;
 }
 
 const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
@@ -198,6 +199,8 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
                     ) : (
                       <Text style={styles.noLocation}>Ubicación no disponible</Text>
                     )}
+                     <Text>Modificado por Admin: {registration.adminFlag ? 'Sí' : 'No'}</Text>
+                    
                   </View>
                 ))}
               </ScrollView>

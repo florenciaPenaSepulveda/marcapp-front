@@ -17,9 +17,7 @@ const weeklySummaryService = async (startDate: string, endDate: string, idUser: 
       endDate: endDate
     };
     console.log(dateInterval);
-    console.log('antes');
     const response = await axios.post(endpoint, { dateInterval: dateInterval });
-    console.log('despues');
     console.log(response.data);
     return { success: true, data: response.data}
 

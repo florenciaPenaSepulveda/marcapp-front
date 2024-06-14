@@ -22,6 +22,7 @@ export type RootStackParamList = {
   EditProfile: Record<string, string> | undefined;
   WeeklySummary: Record<string, string> | undefined;
   SearchWorker: undefined; // Agrega la pantalla SearchWorker
+  
 };
 
 const RouterProvider = () => {
