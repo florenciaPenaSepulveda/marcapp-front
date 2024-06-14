@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
-import { Text, ListItem } from 'react-native-elements';
-import searchWorkerService from '../services/searchWorker.service';
+import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Text, ListItem, Button } from 'react-native-elements';
+import { searchWorkerService, addTimeRegistrationService } from '../services/searchWorker.service';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import moment from 'moment';
@@ -20,23 +20,35 @@ interface TimeRegistration {
 
 const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]); // Adjust type as needed
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [timeRegistrations, setTimeRegistrations] = useState<TimeRegistration[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any>(null); // Store selected user
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [newDate, setNewDate] = useState('');
 
   const handleSearch = async () => {
+    setLoading(true);
+    setErrorMessage(null);
     try {
       const results = await searchWorkerService(searchTerm);
+      setLoading(false);
       if (results?.success) {
-        const filteredResults = results.data.filter((user: any) => 
+        const filteredResults = results.data.filter((user: any) =>
           user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setSearchResults(filteredResults);
+        if (filteredResults.length === 0) {
+          setErrorMessage('No se encontraron resultados.');
+        }
+      } else {
+        setErrorMessage(results.message || 'Error en la búsqueda.');
       }
     } catch (error) {
-      console.error('Error searching workers:', error);
-      // Handle error as needed
+      setLoading(false);
+      setErrorMessage('Error en la búsqueda.');
     }
   };
 
@@ -49,15 +61,58 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
       const response = await weeklySummaryService(initWeek, endWeek, idUser);
       if (response?.success && response.data) {
         setTimeRegistrations(response.data);
-        setSelectedUser(idUser); // Set the selected user
+        setSelectedUser(idUser);
       } else {
         console.log(response?.message);
-        setTimeRegistrations([]); // Set empty array in case of error
+        setTimeRegistrations([]);
       }
     } catch (error) {
-      console.error('Error obtaining time registrations:', error);
-      setTimeRegistrations([]); // Set empty array in case of error
+      console.error('Error obteniendo registros de tiempo:', error);
+      setTimeRegistrations([]);
     }
+  };
+
+  const handleAddTimeRegistration = async () => {
+    if (!newDate) {
+      setErrorMessage('Por favor, completa todos los campos.');
+      return;
+    }
+
+    if (!moment(newDate, 'DD-MM-YYYY HH:mm:ss', true).isValid()) {
+      setErrorMessage( `Formato de fecha inválida: ${newDate}`);
+      return;
+    }
+
+    try {
+      const response = await addTimeRegistrationService(newDate, selectedUser);
+      if (response?.success) {
+        setErrorMessage('Marcaje añadido exitosamente.');
+        setNewDate('');
+        obtainTimeRegistration(selectedUser);
+      } else {
+        setErrorMessage(response.message || 'Error al agregar el marcaje.');
+      }
+    } catch (error) {
+      console.error('Error al agregar el marcaje:', error);
+      setErrorMessage('Error al agregar el marcaje.');
+    }
+  };
+
+  const findMissingExits = (registrations: TimeRegistration[]) => {
+    const entriesWithoutExits: { [key: string]: boolean } = {};
+
+    registrations.forEach((reg) => {
+      const date = reg.date.split(' ')[0];
+      if (reg.type === 'entry') {
+        if (!entriesWithoutExits[date]) {
+          entriesWithoutExits[date] = true;
+        }
+      } else if (reg.type === 'exit') {
+        entriesWithoutExits[date] = false;
+      }
+    });
+
+    return Object.keys(entriesWithoutExits).filter((date) => entriesWithoutExits[date]);
   };
 
   return (
@@ -71,6 +126,8 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleSearch}>
         <Text style={styles.buttonText}>Buscar</Text>
       </TouchableOpacity>
+      {loading && <ActivityIndicator size="large" color="#0000ff" />}
+      {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
       <FlatList
         data={searchResults}
         keyExtractor={(item, index) => index.toString()}
@@ -98,6 +155,21 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
               </View>
             )}
           />
+          {findMissingExits(timeRegistrations).length > 0 && (
+            <Text style={styles.warningMessage}>
+              Los siguientes días tienen entradas sin salidas registradas: {findMissingExits(timeRegistrations).join(', ')}
+            </Text>
+          )}
+          <View style={styles.formContainer}>
+            <Text style={styles.sectionTitle}>Añadir Marcaje</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Fecha (DD-MM-YYYY HH:mm:ss)"
+              onChangeText={(text) => setNewDate(text)}
+              value={newDate}
+            />
+            <Button title="Añadir Marcaje" onPress={handleAddTimeRegistration} />
+          </View>
         </>
       )}
     </View>
@@ -133,6 +205,17 @@ const styles = StyleSheet.create({
   },
   registrationInfo: {
     marginVertical: 10,
+  },
+  formContainer: {
+    marginTop: 20,
+  },
+  errorMessage: {
+    color: 'red',
+    marginTop: 10,
+  },
+  warningMessage: {
+    color: 'red',
+    marginTop: 10,
   },
 });
 
