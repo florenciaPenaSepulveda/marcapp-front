@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/core';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import { Calendar } from 'react-native-calendars'
+import styles from '../styles/register.styles';
 
 
 type FormDataT = {
@@ -58,13 +59,7 @@ const Register = () => {
 
   return (
     <Box
-      style={{
-        flex: 1,
-        alignContent: 'center',
-        justifyContent: 'center',
-        marginHorizontal: '7%',
-        marginVertical: '10%',
-      }}
+      style={styles.container}
     >
       <AlertDialog
         leastDestructiveRef={cancelRef}
@@ -79,12 +74,7 @@ const Register = () => {
       <VStack space={4} alignItems="center">
         <Center>
           <Text
-          style={{
-            fontSize: 18,
-            textAlign: 'center',
-            fontWeight: '700',
-            marginVertical: '10%',
-          }}
+          style={styles.marcapp}
         >
           MarcApp
         </Text>
@@ -156,7 +146,7 @@ const Register = () => {
             }}
             />
           <Text
-            style={{ marginTop: '5%' }}
+            style={styles.login}
             onPress={() => navigation.navigate('Login')}
           >
             I already have an account

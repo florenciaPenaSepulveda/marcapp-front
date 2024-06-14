@@ -9,6 +9,7 @@ import useUserStore from '../stores/useStore';
 import { Header } from 'react-native-elements';
 import { StyleSheet, View } from 'react-native';
 import editService from '../services/editprofile.service';
+import styles from '../styles/editProfile.styles';
 
 type FormDataT = {
   firstName: string;
@@ -84,12 +85,7 @@ const EditProfile = () => {
       <VStack space={4} alignItems="center">
         <Center>
           <Text
-            style={{
-              fontSize: 18,
-              textAlign: 'center',
-              fontWeight: '700',
-              marginVertical: '10%',
-            }}
+            style={styles.description}
           >
             Edit Your Profile
           </Text>
@@ -115,13 +111,7 @@ const EditProfile = () => {
           />
         </Center>
         <View
-        style={{
-          flex: 1,
-          justifyContent: 'flex-start',
-          alignItems: 'flex-start',
-          flexDirection: 'row',
-          gap: 16,
-        }}
+        style={styles.testContainer}
       >
         <Button isLoading={loading} onPress={onEdit}>
           Save changes
@@ -133,18 +123,6 @@ const EditProfile = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    backgroundColor: 'white',
-    paddingHorizontal: '0%',
-    paddingVertical: '0%',
-  },
-  input: {
-    maxWidth: 320,
-  },
-});
+
 
 export default EditProfile;

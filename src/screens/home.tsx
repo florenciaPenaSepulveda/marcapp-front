@@ -11,6 +11,7 @@ import { RootStackParamList } from '../../Router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import timeRegistrationService from '../services/timeRegistration.service';
 import searchWorkerService from '../services/searchWorker.service'
+import styles from '../styles/home.styles';
 
 const Home = () => {
   const navigation =
@@ -36,22 +37,10 @@ const Home = () => {
 
   return (
     <Box
-      style={{
-        flex: 1,
-        alignContent: 'center',
-        justifyContent: 'flex-start',
-        backgroundColor: 'white',
-        paddingHorizontal: '10%',
-        paddingVertical: '5%'
-      }}
+      style={styles.background}
     >
       <Text
-        style={{
-          fontSize: 24,
-          textAlign: 'center',
-          fontWeight: '700',
-          marginVertical: '10%',
-        }}
+        style={styles.description}
       >
         Nice to see you again on MarcApp, {firstName}!
       </Text>
@@ -84,25 +73,5 @@ const Home = () => {
     </Box>
   );
 };
-
-const styles = StyleSheet.create({
-  buttonsContainer: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-  button: {
-    height: 120, // Ajusta la altura del botón aquí
-    width: 150, // Ajusta el ancho del botón aquí
-  },
-  buttonContainer: {
-    position: 'absolute',
-  },
-  buttonTitle: {
-    fontSize: 19, // Tamaño de la fuente del texto del botón
-    fontWeight: 'bold', // Peso de la fuente del texto del botón
-    color: 'white', // Color del texto del botón
-  },
-});
 
 export default Home;
