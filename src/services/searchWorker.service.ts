@@ -12,8 +12,8 @@ const searchWorkerService = async (searchTerm: string) => {
 
     const response = await axios.post(endpoint, {}, {
         headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       console.log(response.data);

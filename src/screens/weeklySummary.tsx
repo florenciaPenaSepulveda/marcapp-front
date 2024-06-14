@@ -16,6 +16,8 @@ interface TimeRegistration {
   id: number;
   id_user: number;
   type: string;
+  latCoordinate: string
+  longCoordinate: string;
 }
 
 const WeeklySummary = () => {
@@ -105,6 +107,11 @@ const WeeklySummary = () => {
               </Text>
               <Text>Registration {index + 1}: {registration.date}</Text>
               <Text>Registration ID: {registration.id}</Text>
+              {registration.latCoordinate && registration.longCoordinate ? (
+                      <Text>Registration Location: {registration.latCoordinate}, {registration.longCoordinate}</Text>
+                    ) : (
+                      <Text style={styles.noLocation}>Location not available</Text>
+              )}
             </View>
           ))
         )}

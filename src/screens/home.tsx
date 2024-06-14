@@ -17,6 +17,7 @@ const Home = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const firstName = useUserStore.getState().firstName;
+  const role = useUserStore.getState().role;
 
   const goProfile = () => {
     navigation.navigate("Profile");
@@ -61,14 +62,16 @@ const Home = () => {
         containerStyle={[styles.buttonContainer, { top: 150, left: 190 }]}
         titleStyle={styles.buttonTitle}/>
 
-        <Button 
-        title="Search worker" 
-        onPress={goSearchWorker} 
-        loading={loading}
-        buttonStyle={styles.button}
-        containerStyle={[styles.buttonContainer, { top: 300, left: 105 }]}
-        titleStyle={styles.buttonTitle}
-        />
+        {role === 'admin' && (
+          <Button 
+          title="Search worker" 
+          onPress={goSearchWorker} 
+          loading={loading}
+          buttonStyle={styles.button}
+          containerStyle={[styles.buttonContainer, { top: 300, left: 105 }]}
+          titleStyle={styles.buttonTitle}
+          />
+        )}
       </View>
     </Box>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Button } from 'react-native';
+import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, Button, ScrollView } from 'react-native';
 import { Text, ListItem, Header } from 'react-native-elements';
 import searchWorkerService from '../services/searchWorker.service';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,6 +19,8 @@ interface TimeRegistration {
   id: number;
   id_user: number;
   type: string;
+  latCoordinate: string;
+  longCoordinate: string;
 }
 
 const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
@@ -70,7 +72,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
       color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
-}; 
+  };
 
   const renderProfilePicture = (name: string) => {
     const initial = name.charAt(0).toUpperCase();
@@ -80,7 +82,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
         <Text style={styles.initial}>{initial}</Text>
       </View>
     );
-};
+  };
 
   return (
     <Box style={styles.container}>
@@ -98,11 +100,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           justifyContent: 'space-around',
         }}
       />
-      <Text
-        style={styles.subtitle}
-      >
-        Type the worker's name you want to search
-      </Text>
+      <Text style={styles.subtitle}>Type the worker's name you want to search</Text>
       <View style={styles.container}>
         <TextInput
           style={styles.input}
@@ -111,9 +109,8 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           value={searchTerm}
         />
         
-        <Button title = "Search" onPress={handleSearch} />
+        <Button title="Search" onPress={handleSearch} />
         
-
         <FlatList
           data={searchResults}
           keyExtractor={(item, index) => index.toString()}
@@ -126,8 +123,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
                   <ListItem.Subtitle>E-mail: {item.email}</ListItem.Subtitle>
                   <ListItem.Subtitle>User ID: {item.id}</ListItem.Subtitle>
                 </ListItem.Content>
-                </View>
-              
+              </View>
             </ListItem>
           )}
         />
@@ -137,16 +133,23 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
             {timeRegistrations.length === 0 ? (
               <Text style={styles.noRegistrationsText}>There are no registrations on this period</Text>
             ) : (
-              timeRegistrations.map((registration, index) => (
-                <View key={index} style={styles.registrationInfo}>
-                  <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
-                    {registration.type.toUpperCase()}
-                  </Text>
-                  <Text>Registration {index + 1}: {registration.date}</Text>
-                  <Text>Registration ID: {registration.id}</Text>
-                </View>
-              ))
-              )}
+              <ScrollView style={styles.scrollContainer}>
+                {timeRegistrations.map((registration, index) => (
+                  <View key={index} style={styles.registrationInfo}>
+                    <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
+                      {registration.type.toUpperCase()}
+                    </Text>
+                    <Text>Registration {index + 1}: {registration.date}</Text>
+                    <Text>Registration ID: {registration.id}</Text>
+                    {registration.latCoordinate && registration.longCoordinate ? (
+                      <Text>Registration Location: {registration.latCoordinate}, {registration.longCoordinate}</Text>
+                    ) : (
+                      <Text style={styles.noLocation}>Location not available</Text>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
           </>
         )}
       </View>

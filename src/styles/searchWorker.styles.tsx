@@ -78,13 +78,24 @@ const styles = StyleSheet.create({
     registrationInfo: {
       alignItems: 'flex-start',
       marginVertical: 10,
-      marginHorizontal: 70,
+      marginHorizontal: 80,
+      
     },
     noRegistrationsText: {
       fontSize: 18,
       textAlign: 'center',
       color: 'gray',
       marginTop: 20,
+    },
+    noLocation: {
+      alignItems: 'flex-start',
+      marginVertical: 10,
+      marginHorizontal: 40,
+      color: 'gray',
+      fontStyle: 'italic',
+    },
+    scrollContainer: {
+      maxHeight: 600, // Ajusta esta altura según sea necesario
     },
 });
 

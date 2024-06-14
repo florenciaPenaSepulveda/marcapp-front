@@ -67,6 +67,13 @@ const styles = StyleSheet.create({
       color: 'gray',
       marginTop: 20,
     },
+    noLocation: {
+      alignItems: 'flex-start',
+      marginVertical: 10,
+      marginHorizontal: 40,
+      color: 'gray',
+      fontStyle: 'italic',
+    },
 });
 
 export default styles;

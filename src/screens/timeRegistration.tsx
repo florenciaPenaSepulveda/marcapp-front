@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Header, Text } from 'react-native-elements';
 import 'text-encoding-polyfill';
