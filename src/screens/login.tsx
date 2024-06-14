@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import loginService from '../services/login.service';
+import styles from '../styles/login.styles';
 
 
 const loginSchema = Joi.object({
@@ -62,21 +63,10 @@ const Login = () => {
 
   return (
     <View
-      style={{
-        flex: 1,
-        justifyContent: 'center',
-        backgroundColor: 'white',
-        paddingHorizontal: '10%',
-        paddingVertical: '5%',
-      }}
+      style={styles.container}
     >
       <Text
-        style={{
-          fontSize: 30,
-          textAlign: 'center',
-          fontWeight: '700',
-          marginVertical: '10%',
-        }}
+        style={styles.marcapp}
       >
         MarcApp
       </Text>
@@ -95,27 +85,19 @@ const Login = () => {
       />
       <Button title="Login" onPress={onLogin} loading={loading} />
       <View
-        style={{
-          flexDirection: 'column',
-          alignContent: 'center',
-          justifyContent: 'center',
-        }}
+        style={styles.login}
       >
         <Text
           onPress={() => navigation.navigate('Register')}
-          style={{ textAlign: 'center', marginTop: '10%' }}
+          style={styles.signup}
         >
           Sign Up
         </Text>
       </View>
       <View
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          alignSelf: 'center',
-        }}
+        style={styles.signuptext}
       >
-        <Text style={{ fontSize: 12, color: 'gray' }}>
+        <Text style={styles.copyright}>
           © 2024 Palta con Pan. All rights reserved.
         </Text>
       </View>

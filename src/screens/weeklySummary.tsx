@@ -9,12 +9,15 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import moment from 'moment';
 import weeklySummaryService from '../services/weeklySummary.service';
+import styles from '../styles/weeklySummary.styles';
 
 interface TimeRegistration {
   date: string;
   id: number;
   id_user: number;
   type: string;
+  latCoordinate: string
+  longCoordinate: string;
 }
 
 const WeeklySummary = () => {
@@ -79,7 +82,7 @@ const WeeklySummary = () => {
       <View style={styles.navigationContainer}>
         <Text
           onPress={goToPreviousWeek}
-          style={{ textAlign: 'left', marginTop: '0%', fontSize: 25 }}
+          style={styles.navigateLeft}
         >
           {"<"}
         </Text>
@@ -88,7 +91,7 @@ const WeeklySummary = () => {
         </Text>
         <Text
           onPress={goToNextWeek}
-          style={{ textAlign: 'right', marginTop: '0%', fontSize: 25 }}
+          style={styles.navigateRight}
         >
           {">"}
         </Text>
@@ -104,6 +107,11 @@ const WeeklySummary = () => {
               </Text>
               <Text>Registration {index + 1}: {registration.date}</Text>
               <Text>Registration ID: {registration.id}</Text>
+              {registration.latCoordinate && registration.longCoordinate ? (
+                      <Text>Registration Location: {registration.latCoordinate}, {registration.longCoordinate}</Text>
+                    ) : (
+                      <Text style={styles.noLocation}>Location not available</Text>
+              )}
             </View>
           ))
         )}
@@ -111,64 +119,5 @@ const WeeklySummary = () => {
     </Box>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    backgroundColor: 'white',
-    paddingHorizontal: '0%',
-    paddingVertical: '0%',
-  },
-  navigationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 20,
-    marginVertical: 20,
-  },
-  navButton: {
-    width: 150,
-    height: 40,
-  },
-  weekText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  name: {
-    fontSize: 24,
-    textAlign: 'center',
-    fontWeight: '700',
-    marginBottom: '5%',
-  },
-  info: {
-    fontSize: 18,
-    textAlign: 'left',
-    marginBottom: '5%',
-  },
-  registrationInfo: {
-    marginTop: 50,
-    alignItems: 'center',
-  },
-  entryText: {
-    color: 'green', // Color del texto para 'entry'
-    fontWeight: 'bold',
-  },
-  exitText: {
-    color: 'red', // Color del texto para 'exit'
-    fontWeight: 'bold',
-  },
-  scrollView: {
-    width: '100%',
-  },
-  noRegistrationsText: {
-    fontSize: 18,
-    textAlign: 'center',
-    color: 'gray',
-    marginTop: 20,
-  },
-});
 
 export default WeeklySummary;

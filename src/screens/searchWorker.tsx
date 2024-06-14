@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Text, ListItem, Button } from 'react-native-elements';
+import { Text, ListItem, Button, Header } from 'react-native-elements';
 import { searchWorkerService, addTimeRegistrationService } from '../services/searchWorker.service';
+import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import moment from 'moment';
 import weeklySummaryService from '../services/weeklySummary.service';
+import { Box } from 'native-base';
 
 type SearchWorkerProps = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -16,6 +17,8 @@ interface TimeRegistration {
   id: number;
   id_user: number;
   type: string;
+  latCoordinate: string;
+  longCoordinate: string;
 }
 
 const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
@@ -25,7 +28,6 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const [newDate, setNewDate] = useState('');
 
   const handleSearch = async () => {
@@ -79,7 +81,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     }
 
     if (!moment(newDate, 'DD-MM-YYYY HH:mm:ss', true).isValid()) {
-      setErrorMessage( `Formato de fecha inválida: ${newDate}`);
+      setErrorMessage(`Formato de fecha inválida: ${newDate}`);
       return;
     }
 
@@ -115,64 +117,110 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     return Object.keys(entriesWithoutExits).filter((date) => entriesWithoutExits[date]);
   };
 
+  const generateRandomColor = () => {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  };
+
+  const renderProfilePicture = (name: string) => {
+    const initial = name.charAt(0).toUpperCase();
+    const backgroundColor = generateRandomColor();
+    return (
+      <View style={[styles.profilePicture, { backgroundColor }]}>
+        <Text style={styles.initial}>{initial}</Text>
+      </View>
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Buscar empleado"
-        onChangeText={(text) => setSearchTerm(text)}
-        value={searchTerm}
+    <Box style={styles.container}>
+      <Header
+        centerComponent={{
+          text: 'Buscar trabajador',
+          style: {
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: 20,
+          },
+        }}
+        containerStyle={{
+          backgroundColor: '#0AA5F2',
+          justifyContent: 'space-around',
+        }}
       />
-      <TouchableOpacity style={styles.button} onPress={handleSearch}>
-        <Text style={styles.buttonText}>Buscar</Text>
-      </TouchableOpacity>
-      {loading && <ActivityIndicator size="large" color="#0000ff" />}
-      {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-      <FlatList
-        data={searchResults}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <ListItem onPress={() => obtainTimeRegistration(item.id)}>
-            <ListItem.Content>
-              <ListItem.Title>{item.firstName} {item.lastName}</ListItem.Title>
-              <ListItem.Subtitle>Correo: {item.email}</ListItem.Subtitle>
-              <ListItem.Subtitle>Id usuario: {item.id}</ListItem.Subtitle>
-            </ListItem.Content>
-          </ListItem>
-        )}
-      />
-      {selectedUser && (
-        <>
-          <Text style={styles.sectionTitle}>Registros de tiempo para el usuario {selectedUser}</Text>
-          <FlatList
-            data={timeRegistrations}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.registrationInfo}>
-                <Text>Fecha: {item.date}</Text>
-                <Text>ID Registro: {item.id}</Text>
-                <Text>Tipo: {item.type}</Text>
+      <Text style={styles.subtitle}>Escribe el nombre del trabajador que deseas buscar</Text>
+      <View style={styles.container}>
+        <TextInput
+          style={styles.input}
+          placeholder="Buscar empleado"
+          onChangeText={(text) => setSearchTerm(text)}
+          value={searchTerm}
+        />
+        
+        <Button title="Buscar" onPress={handleSearch} />
+        
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <ListItem onPress={() => obtainTimeRegistration(item.id)}>
+              <View style={styles.userInfo}>
+                {renderProfilePicture(item.firstName)}
+                <ListItem.Content>
+                  <ListItem.Title>{item.firstName} {item.lastName}</ListItem.Title>
+                  <ListItem.Subtitle>Correo: {item.email}</ListItem.Subtitle>
+                  <ListItem.Subtitle>Id usuario: {item.id}</ListItem.Subtitle>
+                </ListItem.Content>
               </View>
-            )}
-          />
-          {findMissingExits(timeRegistrations).length > 0 && (
-            <Text style={styles.warningMessage}>
-              Los siguientes días tienen entradas sin salidas registradas: {findMissingExits(timeRegistrations).join(', ')}
-            </Text>
+            </ListItem>
           )}
-          <View style={styles.formContainer}>
-            <Text style={styles.sectionTitle}>Añadir Marcaje</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Fecha (DD-MM-YYYY HH:mm:ss)"
-              onChangeText={(text) => setNewDate(text)}
-              value={newDate}
-            />
-            <Button title="Añadir Marcaje" onPress={handleAddTimeRegistration} />
-          </View>
-        </>
-      )}
-    </View>
+        />
+        {selectedUser && (
+          <>
+            <Text style={styles.sectionTitle}>Registros de tiempo del usuario N° {selectedUser} para esta semana:</Text>
+            {timeRegistrations.length === 0 ? (
+              <Text style={styles.noRegistrationsText}>No hay registros en este período</Text>
+            ) : (
+              <ScrollView style={styles.scrollContainer}>
+                {timeRegistrations.map((registration, index) => (
+                  <View key={index} style={styles.registrationInfo}>
+                    <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
+                      {registration.type.toUpperCase()}
+                    </Text>
+                    <Text>Registro {index + 1}: {registration.date}</Text>
+                    <Text>ID Registro: {registration.id}</Text>
+                    {registration.latCoordinate && registration.longCoordinate ? (
+                      <Text>Ubicación del registro: {registration.latCoordinate}, {registration.longCoordinate}</Text>
+                    ) : (
+                      <Text style={styles.noLocation}>Ubicación no disponible</Text>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </>
+        )}
+        {findMissingExits(timeRegistrations).length > 0 && (
+          <Text style={styles.warningMessage}>
+            Los siguientes días tienen entradas sin salidas registradas: {findMissingExits(timeRegistrations).join(', ')}
+          </Text>
+        )}
+        <View style={styles.formContainer}>
+          <Text style={styles.sectionTitle}>Añadir Marcaje</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Fecha (DD-MM-YYYY HH:mm:ss)"
+            onChangeText={(text) => setNewDate(text)}
+            value={newDate}
+          />
+          <Button title="Añadir Marcaje" onPress={handleAddTimeRegistration} />
+        </View>
+      </View>
+    </Box>
   );
 };
 
@@ -216,6 +264,44 @@ const styles = StyleSheet.create({
   warningMessage: {
     color: 'red',
     marginTop: 10,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profilePicture: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  initial: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  subtitle: {
+    fontSize: 16,
+    marginVertical: 10,
+  },
+  scrollContainer: {
+    marginTop: 10,
+  },
+  entryText: {
+    color: 'green',
+  },
+  exitText: {
+    color: 'red',
+  },
+  noRegistrationsText: {
+    textAlign: 'center',
+    marginVertical: 10,
+    color: 'grey',
+  },
+  noLocation: {
+    color: 'grey',
   },
 });
 

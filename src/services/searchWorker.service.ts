@@ -11,14 +11,13 @@ const searchWorkerService = async (searchTerm: string) => {
     console.log('Endpoint:', endpoint);
 
     const response = await axios.post(endpoint, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    console.log('Response:', response.status);
-
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log(response.data);
+    // Procesar la respuesta y devolver los datos
     if (response.status === 201) {
       return { success: true, data: response.data };
     } else {

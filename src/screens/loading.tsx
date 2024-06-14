@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../Router';
 import { Button } from 'react-native-elements';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import styles from '../styles/loading.styles';
 
 const Loading = () => {
   const navigation =
@@ -55,12 +56,7 @@ const Loading = () => {
         <View style={{ paddingHorizontal: '5%' }}>
           <Text
             size="container"
-            style={{
-              paddingVertical: '5%',
-              textAlign: 'center',
-              fontSize: 24,
-              fontWeight: '700',
-            }}
+            style={styles.container}
           >
             {errorMessage}
           </Text>
@@ -74,12 +70,7 @@ const Loading = () => {
           <Spinner size="xl" />
           <Text
             size="container"
-            style={{
-              paddingVertical: '5%',
-              textAlign: 'center',
-              fontSize: 24,
-              fontWeight: '700',
-            }}
+            style={styles.container}
           >
             Iniciando
           </Text>
@@ -88,5 +79,6 @@ const Loading = () => {
     </View>
   );
 };
+
 
 export default Loading;
