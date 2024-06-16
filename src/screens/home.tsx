@@ -8,9 +8,6 @@ import useUserStore from '../stores/useStore';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import timeRegistrationService from '../services/timeRegistration.service';
-import searchWorkerService from '../services/searchWorker.service'
 import styles from '../styles/home.styles';
 
 const Home = () => {
@@ -24,10 +21,12 @@ const Home = () => {
   }
 
   const goTimeRegistration = () => {
+    console.log('Go Time Registration');
     navigation.navigate("TimeRegistration");
   }
 
   const goSearchWorker = () => {
+    console.log('Search Worker');
     navigation.navigate("SearchWorker");
   }
 

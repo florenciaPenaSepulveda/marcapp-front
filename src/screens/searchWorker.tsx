@@ -52,6 +52,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     } catch (error) {
       setLoading(false);
       setErrorMessage('Error en la búsqueda.');
+      console.error('Error en la búsqueda:', error);
     }
   };
 
@@ -163,6 +164,10 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
         />
         
         <Button title="Buscar" onPress={handleSearch} />
+        
+        {loading && <ActivityIndicator size="large" color="#0000ff" />}
+        
+        {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
         
         <FlatList
           data={searchResults}

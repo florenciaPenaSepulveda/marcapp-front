@@ -65,7 +65,12 @@ const addTimeRegistrationService = async (date: string, idUser: number) => {
     });
 
     if (response.status === 201 || response.status === 200) {
-      return { success: true, data: response.data };
+      if(response.data.success) {
+        return {success: true, data: response.data.data}
+      } else {
+        return {success: false, message: response.data.message}
+      }
+
     } else {
       return { success: false, message: 'Error al agregar el marcaje' };
     }

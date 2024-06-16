@@ -65,7 +65,7 @@ const RouterProvider = () => {
         />
          <Stack.Screen
           options={{ headerShown: false }}
-          name="SearchWorker" // Asegúrate de que el nombre de la pantalla coincida con "SearchWorker"
+          name="SearchWorker" // AsegÃºrate de que el nombre de la pantalla coincida con "SearchWorker"
           component={SearchWorker}
         />
         <Stack.Screen name="Home" component={Home} />
