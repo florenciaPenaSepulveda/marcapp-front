@@ -34,8 +34,9 @@ const styles = StyleSheet.create({
     },
     button: {
       backgroundColor: '#0AA5F2',
-      padding: 10,
       borderRadius: 5,
+      marginVertical: 10,
+      marginHorizontal: 100,
       alignItems: 'center',
     },
     buttonText: {
@@ -97,6 +98,47 @@ const styles = StyleSheet.create({
     scrollContainer: {
       maxHeight: 600, // Ajusta esta altura según sea necesario
     },
+    errorMessage: {
+      color: 'red',
+      marginTop: 10,
+    },
+    warningMessage: {
+      color: 'red',
+      marginTop: 10,
+    },
+    formContainer: {
+      marginTop: 20,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+      },
+      modalContent: {
+        width: '90%',
+        padding: 20,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        alignItems: 'center',
+      },
+      closeButton: {
+        alignSelf: 'flex-end',
+      },
+      closeButtonText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#000',
+      },
+      scrollContainerClose: {
+        width: '100%',
+      },
+      yearText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginHorizontal: 20,
+        textAlign: 'center',
+      },
 });
 
 export default styles;

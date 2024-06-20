@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Text, ListItem, Button, Header } from 'react-native-elements';
 import { searchWorkerService, addTimeRegistrationService } from '../services/searchWorker.service';
-import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TouchableHighlight } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import moment from 'moment';
 import weeklySummaryService from '../services/weeklySummary.service';
 import { Box } from 'native-base';
+import styles from '../styles/searchWorker.styles';
 
 type SearchWorkerProps = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -30,6 +31,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [newDate, setNewDate] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -44,14 +46,14 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
         );
         setSearchResults(filteredResults);
         if (filteredResults.length === 0) {
-          setErrorMessage('No se encontraron resultados.');
+          setErrorMessage('There are no results.');
         }
       } else {
-        setErrorMessage(results.message || 'Error en la búsqueda.');
+        setErrorMessage(results.message || 'Search error.');
       }
     } catch (error) {
       setLoading(false);
-      setErrorMessage('Error en la búsqueda.');
+      setErrorMessage('Search error.');
       console.error('Error en la búsqueda:', error);
     }
   };
@@ -66,6 +68,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
       if (response?.success && response.data) {
         setTimeRegistrations(response.data);
         setSelectedUser(idUser);
+        setModalVisible(true);
       } else {
         console.log(response?.message);
         setTimeRegistrations([]);
@@ -83,14 +86,14 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     }
 
     if (!moment(newDate, 'DD-MM-YYYY HH:mm:ss', true).isValid()) {
-      setErrorMessage(`Formato de fecha inválida: ${newDate}`);
+      setErrorMessage(`Invalid date format: ${newDate}`);
       return;
     }
 
     try {
       const response = await addTimeRegistrationService(newDate, selectedUser);
       if (response?.success) {
-        setErrorMessage('Marcaje añadido exitosamente.');
+        setErrorMessage('Time Registration successfully added');
         setNewDate('');
         obtainTimeRegistration(selectedUser);
       } else {
@@ -142,7 +145,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     <Box style={styles.container}>
       <Header
         centerComponent={{
-          text: 'Buscar trabajador',
+          text: 'Search worker',
           style: {
             color: '#fff',
             fontWeight: 'bold',
@@ -154,18 +157,18 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           justifyContent: 'space-around',
         }}
       />
-      <Text style={styles.subtitle}>Escribe el nombre del trabajador que deseas buscar</Text>
+      <Text style={styles.subtitle}>Please type the worker's name you want to search</Text>
       <View style={styles.container}>
         <TextInput
           style={styles.input}
-          placeholder="Buscar empleado"
+          placeholder="Search employee"
           onChangeText={(text) => setSearchTerm(text)}
           value={searchTerm}
         />
         
-        <Button title="Buscar" onPress={handleSearch} />
+        <Button title="Search" onPress={handleSearch} />
         
-        {loading && <ActivityIndicator size="large" color="#0000ff" />}
+        {loading && <ActivityIndicator size="large" color="#4287f5" />}
         
         {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
         
@@ -178,139 +181,75 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
                 {renderProfilePicture(item.firstName)}
                 <ListItem.Content>
                   <ListItem.Title>{item.firstName} {item.lastName}</ListItem.Title>
-                  <ListItem.Subtitle>Correo: {item.email}</ListItem.Subtitle>
-                  <ListItem.Subtitle>Id usuario: {item.id}</ListItem.Subtitle>
+                  <ListItem.Subtitle>E-mail: {item.email}</ListItem.Subtitle>
+                  <ListItem.Subtitle>User ID: {item.id}</ListItem.Subtitle>
                 </ListItem.Content>
               </View>
             </ListItem>
           )}
         />
-        {selectedUser && (
-          <>
-            <Text style={styles.sectionTitle}>Registros de tiempo del usuario N° {selectedUser} para esta semana:</Text>
-            {timeRegistrations.length === 0 ? (
-              <Text style={styles.noRegistrationsText}>No hay registros en este período</Text>
-            ) : (
-              <ScrollView style={styles.scrollContainer}>
-                {timeRegistrations.map((registration, index) => (
-                  <View key={index} style={styles.registrationInfo}>
-                    <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
-                      {registration.type.toUpperCase()}
-                    </Text>
-                    <Text>Registro {index + 1}: {registration.date}</Text>
-                    <Text>ID Registro: {registration.id}</Text>
-                    {registration.latCoordinate && registration.longCoordinate ? (
-                      <Text>Ubicación del registro: {registration.latCoordinate}, {registration.longCoordinate}</Text>
-                    ) : (
-                      <Text style={styles.noLocation}>Ubicación no disponible</Text>
-                    )}
-                     <Text>Modificado por Admin: {registration.adminFlag ? 'Sí' : 'No'}</Text>
-                    
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-          </>
-        )}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <TouchableHighlight
+                style={styles.closeButton}
+                onPress={() => {
+                  setModalVisible(!modalVisible);
+                }}
+              >
+                <Text style={styles.closeButtonText}>x</Text>
+              </TouchableHighlight>
+              <Text style={styles.sectionTitle}>Time registrations for User N° {selectedUser} in this week:</Text>
+              {timeRegistrations.length === 0 ? (
+                <Text style={styles.noRegistrationsText}>There are no registrations in this period</Text>
+              ) : (
+                <ScrollView style={styles.scrollContainer}>
+                  {timeRegistrations.map((registration, index) => (
+                    <View key={index} style={styles.registrationInfo}>
+                      <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
+                        {registration.type.toUpperCase()}
+                      </Text>
+                      <Text>Registration {index + 1}: {registration.date}</Text>
+                      <Text>Register ID: {registration.id}</Text>
+                      {registration.latCoordinate && registration.longCoordinate ? (
+                        <Text>Location: {registration.latCoordinate}, {registration.longCoordinate}</Text>
+                      ) : (
+                        <Text style={styles.noLocation}>Location not available</Text>
+                      )}
+                      <Text>Modified by administrator: {registration.adminFlag ? 'Yes' : 'No'}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          </View>
+        </Modal>
+
         {findMissingExits(timeRegistrations).length > 0 && (
           <Text style={styles.warningMessage}>
-            Los siguientes días tienen entradas sin salidas registradas: {findMissingExits(timeRegistrations).join(', ')}
+            The following days have entries with no registered exit: {findMissingExits(timeRegistrations).join(', ')}
           </Text>
         )}
         <View style={styles.formContainer}>
-          <Text style={styles.sectionTitle}>Añadir Marcaje</Text>
+          <Text style={styles.sectionTitle}>Add registration</Text>
           <TextInput
             style={styles.input}
-            placeholder="Fecha (DD-MM-YYYY HH:mm:ss)"
+            placeholder="Date (DD-MM-YYYY HH:mm:ss)"
             onChangeText={(text) => setNewDate(text)}
             value={newDate}
           />
-          <Button title="Añadir Marcaje" onPress={handleAddTimeRegistration} />
+          <Button title="Add Time Registration" onPress={handleAddTimeRegistration} buttonStyle={styles.button}/>
         </View>
       </View>
     </Box>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  button: {
-    backgroundColor: 'blue',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-  },
-  registrationInfo: {
-    marginVertical: 10,
-  },
-  formContainer: {
-    marginTop: 20,
-  },
-  errorMessage: {
-    color: 'red',
-    marginTop: 10,
-  },
-  warningMessage: {
-    color: 'red',
-    marginTop: 10,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  profilePicture: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  initial: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 18,
-  },
-  subtitle: {
-    fontSize: 16,
-    marginVertical: 10,
-  },
-  scrollContainer: {
-    marginTop: 10,
-  },
-  entryText: {
-    color: 'green',
-  },
-  exitText: {
-    color: 'red',
-  },
-  noRegistrationsText: {
-    textAlign: 'center',
-    marginVertical: 10,
-    color: 'grey',
-  },
-  noLocation: {
-    color: 'grey',
-  },
-});
 
 export default SearchWorker;

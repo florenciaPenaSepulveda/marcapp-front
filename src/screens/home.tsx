@@ -26,8 +26,13 @@ const Home = () => {
   }
 
   const goSearchWorker = () => {
-    console.log('Search Worker');
+    console.log('Go Search Worker');
     navigation.navigate("SearchWorker");
+  }
+
+  const goViewGraphics = () => {
+    console.log('Go View Graphics');
+    navigation.navigate("ViewGraphics");
   }
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -62,14 +67,23 @@ const Home = () => {
         titleStyle={styles.buttonTitle}/>
 
         {role === 'admin' && (
-          <Button 
+          <><Button 
           title="Search worker" 
           onPress={goSearchWorker} 
           loading={loading}
           buttonStyle={styles.button}
-          containerStyle={[styles.buttonContainer, { top: 300, left: 105 }]}
+          containerStyle={[styles.buttonContainer, { top: 300, left: 20 }]}
           titleStyle={styles.buttonTitle}
           />
+          <Button 
+          title="View Graphics" 
+          onPress={goViewGraphics} 
+          loading={loading}
+          buttonStyle={styles.button}
+          containerStyle={[styles.buttonContainer, { top: 300, left: 190 }]}
+          titleStyle={styles.buttonTitle}
+          /></>
+          
         )}
       </View>
     </Box>

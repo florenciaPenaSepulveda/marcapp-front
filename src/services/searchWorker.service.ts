@@ -21,7 +21,7 @@ const searchWorkerService = async (searchTerm: string) => {
     if (response.status === 201) {
       return { success: true, data: response.data };
     } else {
-      return { success: false, message: 'Error en la búsqueda de empleados' };
+      return { success: false, message: 'Error in employee search' };
     }
   } catch (error) {
     if (axios.isAxiosError(error)) {
