@@ -22,18 +22,20 @@ const ViewGraphics: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [averageHours, setAverageHours] = useState<number[]>([]);
+  const [weeklyHours, setWeeklyHours] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [viewType, setViewType] = useState<'year' | 'week'>('year');
+  const [selectedWeek, setSelectedWeek] = useState<any>(null);
 
   useEffect(() => {
     if (selectedUser) {
       if (viewType === 'year') {
         fetchMonthlyAverageHours(selectedUser, selectedYear);
-      } else {
-        //fetchWeeklyAverageHours(selectedUser);
+      } else if (viewType === 'week' && selectedWeek) {
+        fetchWeeklyHours(selectedUser, selectedWeek);
       }
     }
-  }, [selectedUser, selectedYear, viewType]);
+  }, [selectedUser, selectedYear, viewType, selectedWeek]);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -63,7 +65,6 @@ const ViewGraphics: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const fetchMonthlyAverageHours = async (userId: number, year: number) => {
     try {
       const response = await viewGraphicsService.getMonthlyAverageHours();
-      //console.log("RESPONSE EN FRONT:", response);
       if (response.success) {
         const averages = Array(12).fill(0);
         response.data.forEach((item: any) => {
@@ -73,7 +74,6 @@ const ViewGraphics: React.FC<SearchWorkerProps> = ({ navigation }) => {
             averages[itemMonth] = item.average_hours_worked;
           }
         });
-        console.log("averages:", averages);
         setAverageHours(averages);
       } else {
         setErrorMessage(response.message || "Error fetching monthly average hours.");
@@ -84,8 +84,34 @@ const ViewGraphics: React.FC<SearchWorkerProps> = ({ navigation }) => {
     }
   };
 
+  const fetchWeeklyHours = async (userId: number, week: string) => {
+    try {
+      const response = await viewGraphicsService.getWeeklyHours(userId, week);
+      if (response.success) {
+        const hours = Array(7).fill(0);
+        response.data.forEach((item: any) => {
+          const dayIndex = moment(item.date).day(); // Obtener el índice del día de la semana (0-6)
+          hours[dayIndex] = item.hours_worked;
+        });
+        setWeeklyHours(hours);
+      } else {
+        setErrorMessage(response.message || "Error fetching weekly hours.");
+      }
+    } catch (error) {
+      console.error('Error fetching weekly hours:', error);
+      setErrorMessage('Error fetching weekly hours.');
+    }
+  };
+
   const handleYearChange = (direction: 'prev' | 'next') => {
     setSelectedYear((prevYear) => direction === 'prev' ? prevYear - 1 : prevYear + 1);
+  };
+
+  const handleWeekChange = (direction: 'prev' | 'next') => {
+    setSelectedWeek((prevWeek: any) => {
+      const newWeek = direction === 'prev' ? moment(prevWeek).subtract(1, 'weeks') : moment(prevWeek).add(1, 'weeks');
+      return newWeek.format('YYYY-MM-DD');
+    });
   };
 
   const renderProfilePicture = (name: string) => {
@@ -106,6 +132,7 @@ const ViewGraphics: React.FC<SearchWorkerProps> = ({ navigation }) => {
     }
     return color;
   };
+
   return (
     <Box style={styles.container}>
       <Header
@@ -143,6 +170,7 @@ const ViewGraphics: React.FC<SearchWorkerProps> = ({ navigation }) => {
           renderItem={({ item }) => (
             <ListItem onPress={() => {
               setSelectedUser(item.id);
+              setSelectedWeek(moment().startOf('isoWeek').format('YYYY-MM-DD'));
               setModalVisible(true);
             }}>
               <View style={styles.userInfo}>
@@ -174,63 +202,106 @@ const ViewGraphics: React.FC<SearchWorkerProps> = ({ navigation }) => {
               >
                 <Text style={styles.closeButtonText}>x</Text>
               </TouchableHighlight>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text onPress={() => handleYearChange('prev')} style={styles.navigate} >
-                  {"<"}
-                </Text>
-                <Text style={styles.yearText}>{selectedYear}</Text>
-                <Text onPress={() => handleYearChange('next')} style={styles.navigate} >
+              {viewType === 'year' && (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text onPress={() => handleYearChange('prev')} style={styles.navigate}>
+                    {"<"}
+                  </Text>
+                  <Text style={styles.yearText}>{selectedYear}</Text>
+                  <Text onPress={() => handleYearChange('next')} style={styles.navigate}>
                   {">"}
-                </Text>
-                
-              </View>
+                    </Text>
+                </View>
+              )}
+              {viewType === 'week' && (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text onPress={() => handleWeekChange('prev')} style={styles.navigate}>
+                    {"<"}
+                  </Text>
+                  <Text style={styles.weekText}>
+                    {moment(selectedWeek).startOf('isoWeek').format('DD/MM')} - {moment(selectedWeek).endOf('isoWeek').format('DD/MM')}
+                  </Text>
+                  <Text onPress={() => handleWeekChange('next')} style={styles.navigate}>
+                    {">"}
+                  </Text>
+                </View>
+              )}
               <ScrollView style={styles.scrollContainer}>
-                {averageHours.some(item => item !== 0) ? (
+                {viewType === 'year' && averageHours.some(item => item !== 0) ? (
                   <View style={styles.graphic}>
-                  <YAxis
+                    <YAxis
                       data={averageHours}
-                      style={ styles.yaxis }
-                      contentInset={ styles.insetY }
+                      style={styles.yaxis}
+                      contentInset={styles.insetY}
                       svg={{ fontSize: 10, fill: 'grey' }}
-                  />
-                  <View style={ styles.barchart }>
+                    />
+                    <View style={styles.barchart}>
                       <BarChart
-                          style={ styles.barchartType }
-                          data={averageHours}
-                          contentInset={ styles.insetY }
-                          svg={{ stroke: '#046b0b', fill: '#145c19' }}
+                        style={styles.barchartType}
+                        data={averageHours}
+                        contentInset={styles.insetY}
+                        svg={{ stroke: '#046b0b', fill: '#145c19' }}
                       >
-                          <Grid/>
+                        <Grid />
                       </BarChart>
                       <XAxis
-                          style={ styles.xaxis }
-                          data={averageHours}
-                          formatLabel={(value: any, index: number) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][index]}
-                          contentInset={ styles.insetX }
-                          svg={{ fontSize: 10, fill: 'grey' }}
+                        style={styles.xaxis}
+                        data={averageHours}
+                        formatLabel={(value: any, index: number) =>
+                          ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][index]
+                        }
+                        contentInset={styles.insetX}
+                        svg={{ fontSize: 10, fill: 'grey' }}
                       />
+                    </View>
                   </View>
+                ) : viewType === 'week' && weeklyHours.some(item => item !== 0) ? (
+                  <View style={styles.graphic}>
+                    <YAxis
+                      data={weeklyHours}
+                      style={styles.yaxis}
+                      contentInset={styles.insetY}
+                      svg={{ fontSize: 10, fill: 'grey' }}
+                    />
+                    <View style={styles.barchart}>
+                      <BarChart
+                        style={styles.barchartType}
+                        data={weeklyHours}
+                        contentInset={styles.insetY}
+                        svg={{ stroke: '#046b0b', fill: '#145c19' }}
+                      >
+                        <Grid />
+                      </BarChart>
+                      <XAxis
+                        style={styles.xaxis}
+                        data={weeklyHours}
+                        formatLabel={(value: any, index: number) =>
+                          ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index]
+                        }
+                        contentInset={styles.insetX}
+                        svg={{ fontSize: 10, fill: 'grey' }}
+                      />
+                    </View>
                   </View>
-
                 ) : (
-                  <Text style = {styles.noRegistrationsText}> No data available for the selected year.</Text>
+                  <Text style={styles.noRegistrationsText}>
+                    No data available for the selected {viewType === 'year' ? 'year' : 'week'}.
+                  </Text>
                 )}
-                  <View style={styles.buttonContainer}>
-                    <Button
-                      buttonStyle={styles.button}
-                      containerStyle={[styles.buttonContainer, { top: 20, left: 25 }]}
-                      title="By Year"
-                      
-                    />
-                    <Button
-                      buttonStyle={styles.button}
-                      containerStyle={[styles.buttonContainer, { top: -20, left: 175 }]}
-                      title="By Week"
-                      
-                    />
-                  </View>
-
-    
+                <View style={styles.buttonContainer}>
+                  <Button
+                    buttonStyle={styles.button}
+                    containerStyle={[styles.buttonContainer, { top: 20, left: 25 }]}
+                    title="By Year"
+                    onPress={() => setViewType('year')}
+                  />
+                  <Button
+                    buttonStyle={styles.button}
+                    containerStyle={[styles.buttonContainer, { top: -20, left: 175 }]}
+                    title="By Week"
+                    onPress={() => setViewType('week')}
+                  />
+                </View>
               </ScrollView>
             </View>
           </View>
