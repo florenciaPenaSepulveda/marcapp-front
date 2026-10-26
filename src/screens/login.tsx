@@ -89,7 +89,7 @@ const Login = () => {
         />
       </View>
       <Text style={[font.small, styles.center]}>
-        © 2024 Palta con Pan. All rights reserved.
+        MarcApp® Registered trademark
       </Text>
     </Screen>
   );
