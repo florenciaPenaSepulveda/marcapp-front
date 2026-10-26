@@ -69,6 +69,7 @@
       "src/screens/login.tsx",
       "src/screens/home.tsx",
       "src/screens/changePassword.tsx",
+      "src/screens/searchWorker.tsx",
       "!src/**/*.test.{ts,tsx}"
     ],
     "coverageReporters": [

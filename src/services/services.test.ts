@@ -12,6 +12,7 @@ import weeklySummaryService from './weeklySummary.service';
 import {
   addTimeRegistrationService,
   deleteTimeRegistrationService,
+  deleteWorkerService,
   searchWorkerService,
   summaryService,
   teamStatusService,
@@ -254,9 +255,36 @@ describe('administración de usuarios y estadísticas', () => {
     expect((await deleteTimeRegistrationService(4)).success).toBe(false);
   });
 
+  describe('deleteWorkerService', () => {
+    it('elimina al usuario y luego sus marcajes', async () => {
+      usuarios.onDelete('/users/7').reply(200, { success: true });
+      marcajes.onDelete('/marcaje/admin/user/7').reply(200, { success: true, deleted: 4 });
+      expect(await deleteWorkerService(7)).toEqual({ success: true, data: { registrationsRemoved: true } });
+      expect(usuarios.history.delete).toHaveLength(1);
+      expect(marcajes.history.delete).toHaveLength(1);
+    });
+
+    it('no toca los marcajes si no se pudo eliminar al usuario', async () => {
+      usuarios.onDelete('/users/7').reply(400, { message: 'You cannot delete the last administrator' });
+      expect(await deleteWorkerService(7)).toEqual({
+        success: false,
+        message: 'You cannot delete the last administrator',
+      });
+      expect(marcajes.history.delete).toHaveLength(0);
+    });
+
+    it('informa cuando el usuario se eliminó pero no sus marcajes', async () => {
+      usuarios.onDelete('/users/7').reply(200, { success: true });
+      marcajes.onDelete('/marcaje/admin/user/7').networkError();
+      expect(await deleteWorkerService(7)).toEqual({ success: true, data: { registrationsRemoved: false } });
+    });
+  });
+
   it('cambia la contraseña enviando la actual y la nueva', async () => {
-    usuarios.onPatch('/users/password').reply(200, { message: 'Password updated' });
+    useTokenStore.setState({ token: 'token-viejo' });
+    usuarios.onPatch('/users/password').reply(200, { message: 'Password updated', access_token: 'token-nuevo' });
     expect((await changePasswordService('Actual12345', 'Nueva12345')).success).toBe(true);
+    expect(useTokenStore.getState().token).toBe('token-nuevo');
     expect(JSON.parse(usuarios.history.patch[0].data)).toEqual({
       currentPassword: 'Actual12345',
       newPassword: 'Nueva12345',
