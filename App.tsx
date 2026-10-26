@@ -1,20 +1,13 @@
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NativeBaseProvider } from 'native-base';
-import { ThemeProvider } from 'react-native-elements';
 import RouterProvider from './Router';
+import { colors } from './src/theme';
 
-const App = () => {
-  return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <NativeBaseProvider>
-          <RouterProvider />
-        </NativeBaseProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
-  );
-};
+const App = () => (
+  <SafeAreaProvider>
+    <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+    <RouterProvider />
+  </SafeAreaProvider>
+);
 
 export default App;
-
-
