@@ -19,3 +19,5 @@ jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(),
   getCurrentPositionAsync: jest.fn(),
 }));
+
+jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
