@@ -1,4 +1,3 @@
-// Importar useState
 import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import { Box } from 'native-base';
@@ -13,8 +12,12 @@ import styles from '../styles/home.styles';
 const Home = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const firstName = useUserStore.getState().firstName;
-  const role = useUserStore.getState().role;
+  const { firstName, role, setFirstName, setLastName } = useUserStore((state) => ({
+    firstName: state.firstName,
+    role: state.role,
+    setFirstName: state.setFirstName,
+    setLastName: state.setLastName,
+  }));
 
   const goProfile = () => {
     navigation.navigate("Profile");
@@ -38,7 +41,8 @@ const Home = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-  }, []);
+    // Cualquier lógica que necesites para cuando se actualiza el estado
+  }, [firstName, role]);
 
   return (
     <Box
@@ -51,39 +55,42 @@ const Home = () => {
       </Text>
       <View style={styles.buttonsContainer}>
         <Button
-        title="View Profile"
-        onPress={goProfile}
-        loading={loading}
-        buttonStyle={styles.button}
-        containerStyle={[styles.buttonContainer, { top: 150, left: 20 }]}
-        titleStyle={styles.buttonTitle}/>
+          title="View Profile"
+          onPress={goProfile}
+          loading={loading}
+          buttonStyle={styles.button}
+          containerStyle={[styles.buttonContainer, { top: 150, left: 50 }]}
+          titleStyle={styles.buttonTitle}
+        />
 
         <Button 
-        title="Add Time Registration"
-        onPress={goTimeRegistration}
-        loading={loading}
-        buttonStyle={styles.button}
-        containerStyle={[styles.buttonContainer, { top: 150, left: 190 }]}
-        titleStyle={styles.buttonTitle}/>
+          title="Add Time Registration"
+          onPress={goTimeRegistration}
+          loading={loading}
+          buttonStyle={styles.button}
+          containerStyle={[styles.buttonContainer, { top: 150, right: 50 }]}
+          titleStyle={styles.buttonTitle}
+        />
 
         {role === 'admin' && (
-          <><Button 
-          title="Search worker" 
-          onPress={goSearchWorker} 
-          loading={loading}
-          buttonStyle={styles.button}
-          containerStyle={[styles.buttonContainer, { top: 300, left: 20 }]}
-          titleStyle={styles.buttonTitle}
-          />
-          <Button 
-          title="View Graphics" 
-          onPress={goViewGraphics} 
-          loading={loading}
-          buttonStyle={styles.button}
-          containerStyle={[styles.buttonContainer, { top: 300, left: 190 }]}
-          titleStyle={styles.buttonTitle}
-          /></>
-          
+          <>
+            <Button 
+              title="Search worker" 
+              onPress={goSearchWorker} 
+              loading={loading}
+              buttonStyle={styles.button}
+              containerStyle={[styles.buttonContainer, { top: 300, left: 50 }]}
+              titleStyle={styles.buttonTitle}
+            />
+            <Button 
+              title="View Graphics" 
+              onPress={goViewGraphics} 
+              loading={loading}
+              buttonStyle={styles.button}
+              containerStyle={[styles.buttonContainer, { top: 300, right: 50 }]}
+              titleStyle={styles.buttonTitle}
+            />
+          </>
         )}
       </View>
     </Box>

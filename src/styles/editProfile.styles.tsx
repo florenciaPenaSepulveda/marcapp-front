@@ -12,11 +12,13 @@ const styles = StyleSheet.create({
     input: {
       maxWidth: 320,
     },
-    description:{
-      fontSize: 18,
-      textAlign: 'center',
-      fontWeight: '700',
+    description: {
+      fontSize: 20,
+      justifyContent: 'flex-start',
+      fontWeight: '600',
       marginVertical: '10%',
+      paddingHorizontal: '0%',
+      color: 'gray',
     },
     testContainer:{
       flex: 1,

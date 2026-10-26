@@ -14,10 +14,21 @@ import { StyleSheet } from 'react-native';
 import styles from '../styles/profile.styles';
 
 const Profile = () => {
-  const userStore = useUserStore.getState();
+  const { firstName, lastName, email, birthday, role, setFirstName, setLastName, setEmail, setBirthday, setRole } = useUserStore((state) => ({
+    firstName: state.firstName,
+    lastName: state.lastName,
+    email: state.email,
+    birthday: state.birthday,
+    role: state.role,
+    setFirstName: state.setFirstName,
+    setLastName: state.setLastName,
+    setEmail: state.setEmail,
+    setBirthday: state.setBirthday,
+    setRole: state.setRole,
+  }));
+  
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const birthday = new Date(userStore.birthday);
- 
+  
   const goEdit = () => {
     navigation.navigate("EditProfile");
   }
@@ -34,24 +45,8 @@ const Profile = () => {
     }
     return color;
   };
-  
-  /*
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const profile = await profileService();
-        if (!profile?.success) {
-          console.log('Fallo obtención del usuario');
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getUser();
-  }, []);
-  */
 
-const renderProfilePicture = (name: string) => {
+  const renderProfilePicture = (name: string) => {
     const initial = name.charAt(0).toUpperCase();
     const backgroundColor = generateRandomColor();
     return (
@@ -59,34 +54,33 @@ const renderProfilePicture = (name: string) => {
         <Text style={styles.initial}>{initial}</Text>
       </View>
     );
-};
+  };
 
-const [loading, setLoading] = useState<boolean>(false);
-return (
-    <Box style = {styles.container}>
-        <Header
-            centerComponent={{ text: 'Profile info', style: { color: '#fff',
-            fontWeight: 'bold', fontSize: 20
-            } }}
-            containerStyle={{
-                backgroundColor: '#0AA5F2',
-                justifyContent: 'space-around',
-            }}
-        />
-        {renderProfilePicture(userStore.firstName)}
-        <Text style={styles.name}>{useUserStore.getState().firstName} {useUserStore.getState().lastName}</Text>
-        <Text style={styles.info}>Email: {userStore.email}</Text>
-        <Text style={styles.info}>
-            Birthday: {birthday.getUTCDate().toString()} {moment.months(birthday.getUTCMonth())} {birthday.getFullYear().toString()}
-        </Text>
+  const formatDate = (date: string) => {
+    return moment(date).format('DD MMMM YYYY');
+  }
 
-        <Button title = "Edit Profile" onPress={goEdit} loading = {loading} />
-            <View
-                style={styles.button}
-            ></View>
+  const [loading, setLoading] = useState<boolean>(false);
+
+  return (
+    <Box style={styles.container}>
+      <Header
+        centerComponent={{ text: 'Profile info', style: { color: '#fff', fontWeight: 'bold', fontSize: 20 } }}
+        containerStyle={{
+          backgroundColor: '#0AA5F2',
+          justifyContent: 'space-around',
+        }}
+      />
+      {renderProfilePicture(firstName)}
+      <Text style={styles.name}>{firstName} {lastName}</Text>
+      <Text style={styles.info}>Email: {email}</Text>
+      <Text style={styles.info}>
+        Birthday: {formatDate(birthday)}
+      </Text>
+      <Button title="Edit Profile" onPress={goEdit} loading={loading} />
+      <View style={styles.button}></View>
     </Box>
-    
-    );
+  );
 };
 
 export default Profile;

@@ -17,7 +17,6 @@ const searchWorkerService = async (searchTerm: string) => {
         }
       });
       console.log(response.data);
-    // Procesar la respuesta y devolver los datos
     if (response.status === 201) {
       return { success: true, data: response.data };
     } else {

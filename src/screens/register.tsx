@@ -1,13 +1,11 @@
-import { Box, Button, Center, Input, Text, VStack } from 'native-base';
-import { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { Box, Button, Center, Input, Text, VStack, AlertDialog, Modal, HStack } from 'native-base';
 import registerService from '../services/register.service';
-import { AlertDialog } from 'native-base';
 import { useNavigation } from '@react-navigation/core';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
-import { Calendar } from 'react-native-calendars'
+import { Calendar } from 'react-native-calendars';
 import styles from '../styles/register.styles';
-
 
 type FormDataT = {
   firstName: string;
@@ -30,37 +28,58 @@ const Register = () => {
   const [alert, setAlert] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const cancelRef = useRef(null);
 
   const setValue = (key: string, value: string) => {
-    setData((prevState) => {
-      return {
-        ...prevState,
-        [key]: value,
-      };
-    });
+    setData((prevState) => ({
+      ...prevState,
+      [key]: value,
+    }));
   };
 
   const onClickButton = async () => {
     setLoading(true);
     const response = await registerService(data);
     setLoading(false);
-  
+
     setMessage(response?.message || '');
     setAlert(true);
-  
+
     if (response?.success) {
       setData(InitData);
       navigation.navigate('Login');
     }
   };
 
+  const onDayPress = (day: any) => {
+    const selectedDate = new Date(day.dateString);
+    selectedDate.setFullYear(selectedYear);
+    setValue('birthday', selectedDate.toISOString().split('T')[0]);
+    setShowCalendar(false);
+  };
+
+  const incrementYear = () => {
+    const newYear = selectedYear + 1;
+    setSelectedYear(newYear);
+    setCurrentMonth(0);
+  };
+
+  const decrementYear = () => {
+    const newYear = selectedYear - 1;
+    setSelectedYear(newYear);
+    setCurrentMonth(0);
+  };
+
+  const onMonthChange = (months: any) => {
+    setCurrentMonth(months[0].month);
+  };
+
   return (
-    <Box
-      style={styles.container}
-    >
+    <Box style={styles.container}>
       <AlertDialog
         leastDestructiveRef={cancelRef}
         isOpen={alert}
@@ -73,14 +92,11 @@ const Register = () => {
       </AlertDialog>
       <VStack space={4} alignItems="center">
         <Center>
-          <Text
-          style={styles.marcapp}
-        >
-          MarcApp
-        </Text>
+          <Text style={styles.description}>Please enter your information</Text>
         </Center>
         <Center>
           <Input
+            style={styles.input}
             size="l"
             variant="outline"
             placeholder="First name"
@@ -90,17 +106,17 @@ const Register = () => {
         </Center>
         <Center>
           <Input
+            style={styles.input}
             size="l"
             variant="outline"
             placeholder="Last name"
             value={data?.lastName}
-            onChange={(e) =>
-              setValue('lastName', e?.nativeEvent?.text as string)
-            }
+            onChange={(e) => setValue('lastName', e?.nativeEvent?.text as string)}
           />
         </Center>
         <Center>
           <Input
+            style={styles.input}
             size="l"
             variant="outline"
             placeholder="Email"
@@ -110,41 +126,32 @@ const Register = () => {
         </Center>
         <Center>
           <Input
+            style={styles.input}
             size="l"
             type="password"
             variant="outline"
             placeholder="Password"
             value={data?.pass}
-            onChange={(e) =>
-              setValue('pass', e?.nativeEvent?.text as string)
-            }
+            onChange={(e) => setValue('pass', e?.nativeEvent?.text as string)}
           />
         </Center>
         <Center>
           <Input
+            style={styles.input}
             size="l"
             variant="outline"
             placeholder="Birthday (YYYY-MM-DD)"
             value={data?.birthday}
-            onChange={(e) =>
-              setValue('birthday', e?.nativeEvent?.text as string)
-            }
+            onFocus={() => setShowCalendar(true)}
+            onChange={(e) => setValue('birthday', e?.nativeEvent?.text as string)}
           />
         </Center>
         <Center>
-          {/* FORMATO COMENTARIOS EN TSX
-            */
-          } 
           <Button isLoading={loading} onPress={onClickButton}>
             Create account
           </Button>
         </Center>
         <Center>
-        <Calendar
-            onDayPress={day => {
-                console.log('selected day', day);
-            }}
-            />
           <Text
             style={styles.login}
             onPress={() => navigation.navigate('Login')}
@@ -153,6 +160,27 @@ const Register = () => {
           </Text>
         </Center>
       </VStack>
+
+      <Modal isOpen={showCalendar} onClose={() => setShowCalendar(false)}>
+        <Modal.Content maxWidth="400px">
+          <Modal.CloseButton />
+          <Modal.Header>Select your birthday</Modal.Header>
+          <Modal.Body>
+            <HStack justifyContent="space-between" alignItems="center" mb={2}>
+              <Button onPress={decrementYear}>-</Button>
+              <Text fontSize="xl">{selectedYear}</Text>
+              <Button onPress={incrementYear}>+</Button>
+            </HStack>
+            <Calendar
+              firstDay={1}
+              onDayPress={onDayPress}
+              current={`${selectedYear}-${currentMonth < 10 ? `0${currentMonth}` : currentMonth}-01`}
+              onVisibleMonthsChange={onMonthChange}
+              monthFormat={'MMMM'}
+            />
+          </Modal.Body>
+        </Modal.Content>
+      </Modal>
     </Box>
   );
 };

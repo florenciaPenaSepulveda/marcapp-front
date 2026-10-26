@@ -80,8 +80,9 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   };
 
   const handleAddTimeRegistration = async () => {
+    
     if (!newDate) {
-      setErrorMessage('Por favor, completa todos los campos.');
+      setErrorMessage('Please, complete all the fields.');
       return;
     }
 
@@ -92,6 +93,8 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
 
     try {
       const response = await addTimeRegistrationService(newDate, selectedUser);
+      
+      console.log("NUEVA FECHA:", newDate)
       if (response?.success) {
         setErrorMessage('Time Registration successfully added');
         setNewDate('');
@@ -141,6 +144,15 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     );
   };
 
+  const goEditTimeRegistration = (registration: TimeRegistration) => {
+    setModalVisible(false);
+    navigation.navigate("EditTimeRegistration", {
+      id: registration.id.toString(),
+      date: registration.date,
+      type: registration.type
+    });
+  };
+
   return (
     <Box style={styles.container}>
       <Header
@@ -166,7 +178,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           value={searchTerm}
         />
         
-        <Button title="Search" onPress={handleSearch} />
+        <Button title="Search" onPress={handleSearch} buttonStyle={styles.button}/>
         
         {loading && <ActivityIndicator size="large" color="#4287f5" />}
         
@@ -177,12 +189,13 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
             <ListItem onPress={() => obtainTimeRegistration(item.id)}>
+              {renderProfilePicture(item.firstName)}
               <View style={styles.userInfo}>
-                {renderProfilePicture(item.firstName)}
                 <ListItem.Content>
                   <ListItem.Title>{item.firstName} {item.lastName}</ListItem.Title>
                   <ListItem.Subtitle>E-mail: {item.email}</ListItem.Subtitle>
                   <ListItem.Subtitle>User ID: {item.id}</ListItem.Subtitle>
+                  <ListItem.Subtitle>Birthday: {item.birthday.split('T')[0]}</ListItem.Subtitle>
                 </ListItem.Content>
               </View>
             </ListItem>
@@ -196,7 +209,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
             setModalVisible(!modalVisible);
           }}
         >
-          <View style={styles.modalContainer}>
+          <View style={styles.modalBackground}>
             <View style={styles.modalContent}>
               <TouchableHighlight
                 style={styles.closeButton}
@@ -212,7 +225,11 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
               ) : (
                 <ScrollView style={styles.scrollContainer}>
                   {timeRegistrations.map((registration, index) => (
-                    <View key={index} style={styles.registrationInfo}>
+                    <TouchableOpacity 
+                      key={index} 
+                      style={styles.registrationInfo} 
+                      onPress={() => goEditTimeRegistration(registration)}
+                    >
                       <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
                         {registration.type.toUpperCase()}
                       </Text>
@@ -224,7 +241,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
                         <Text style={styles.noLocation}>Location not available</Text>
                       )}
                       <Text>Modified by administrator: {registration.adminFlag ? 'Yes' : 'No'}</Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </ScrollView>
               )}
@@ -238,7 +255,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           </Text>
         )}
         <View style={styles.formContainer}>
-          <Text style={styles.sectionTitle}>Add registration</Text>
+          <Text style={styles.sectionTitle}>Add time registration</Text>
           <TextInput
             style={styles.input}
             placeholder="Date (DD-MM-YYYY HH:mm:ss)"
