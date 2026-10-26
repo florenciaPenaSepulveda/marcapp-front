@@ -1,58 +1,25 @@
-import axios from 'axios';
-import useUserStore from '../stores/useStore';
-import useTokenStore from '../stores/tokenStore';
+import { usersApi } from './http';
+import { mensajeDeError } from '../lib/errors';
+import { exito, fallo, Resultado, Usuario } from './types';
 
-export type editServiceResponseT = {
-  success: boolean;
-  data?: string;
-  message?: string;
+export type EditProfileData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  birthday: string;
 };
 
-const editService = async (
-  data: { firstName: string; lastName: string }
-): Promise<editServiceResponseT> => {
+const editService = async (data: EditProfileData): Promise<Resultado<Usuario>> => {
   try {
-    const tokenStore = useTokenStore.getState();
-    const token = tokenStore.token;
-    const headers = {
-      Authorization: `Bearer ${token}`  // Agregar el token de autorización en los headers
-    };
-    const userStore = useUserStore.getState();
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/`;
-    const response = await axios.patch(endpoint, data, { headers });
-    console.log("EditProfile service")
-    console.log(response.data);
-    return {
-      success: true,
-    };
+    const respuesta = await usersApi.patch<Usuario>('/users', {
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      email: data.email.trim(),
+      birthday: data.birthday.trim(),
+    });
+    return exito(respuesta.data);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        switch (error.response.status) {
-          case 400:
-            if (Array.isArray(error.response.data.message)) {
-              // Si es un array de mensajes, podrías combinarlos en un solo mensaje o manejarlos como necesites
-              const errorMessage = error.response.data.message.join(', ');
-              console.error(errorMessage);
-              return { success: false, message: errorMessage };
-            } else {
-              console.error(error.response.data.message);
-              return { success: false, message: error.response.data.message };
-            }
-          case 401:
-            console.error(error.message);
-            return {success: false, message: error.response.data.message}
-          case 500:
-            console.error('Error 500: Error del servidor.');
-            break;
-        }
-      } else if (error.request) {
-        return {success: false, message: `No se recibió respuesta del servidor: ${error.request}`};
-        };
-      } else {
-        return {success: false, message: `Error al configurar solicitud`};
-      }
-    return { success: false, message: 'Error desconocido' };
+    return fallo(mensajeDeError(error, 'Could not update your profile.'));
   }
 };
 

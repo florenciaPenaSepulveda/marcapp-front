@@ -1,28 +1,21 @@
-import axios from "axios";
-import moment from "moment";
+import { marcajeApi } from './http';
+import { mensajeDeError } from '../lib/errors';
+import { exito, fallo, Resultado } from './types';
 
-const getRegistrationStateService = async (idUser: number) => {
+export type EstadoDelDia = 0 | 1 | 2;
+
+const getRegistrationStateService = async (
+  idUser: number,
+): Promise<Resultado<EstadoDelDia>> => {
   try {
-    const today = moment().format('DD-MM-YYYY');
-    const tomorrow = moment().add(1, 'days').format('DD-MM-YYYY');
-    console.log(today);
-    console.log(tomorrow);
-    const endpoint = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/marcaje/user/today/${idUser}`;
-    console.log(endpoint)
-    const response = await axios.post(endpoint, {
-      startDate: today, 
-      endDate: tomorrow,
-    });
-    if(response?.status === 201) {
-        console.log('Data:', response.data)
-        return { success: true, data: response.data};
-    } else {
-      console.log("Error del servidor")
-      console.log(response.status);
-      return { success: false, message: 'Error del servidor' };
-    }
-  } catch (error: unknown) {
-    return { success: false, message: 'Ocurrió un error desconocido' };
+    const { data } = await marcajeApi.post<EstadoDelDia>(
+      `/marcaje/user/today/${idUser}`,
+      {},
+    );
+    return exito(data);
+  } catch (error) {
+    return fallo(mensajeDeError(error, 'Could not load today\'s status.'));
   }
 };
+
 export default getRegistrationStateService;

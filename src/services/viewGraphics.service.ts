@@ -1,145 +1,63 @@
-import axios from 'axios';
-import useTokenStore from '../stores/tokenStore';
-import { useToken } from 'native-base';
+import { marcajeApi, usersApi } from './http';
+import { mensajeDeError } from '../lib/errors';
+import { exito, fallo, Resultado, Usuario } from './types';
 
-const viewGraphicsService = async (searchTerm: string) => {
+export type HorasMensuales = {
+  id: number;
+  idUser: number;
+  month: string;
+  average_hours_worked: number;
+};
+
+export type HorasDiarias = {
+  id: number;
+  idUser: number;
+  day: string;
+  dailyHoursWorked: number;
+};
+
+const viewGraphicsService = async (
+  searchTerm: string,
+): Promise<Resultado<Usuario[]>> => {
   try {
-    const tokenStore = useTokenStore.getState();
-    const token = tokenStore.token;
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/all`;
-    const response = await axios.post(endpoint, {
-      searchTerm,
-    }, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        }
+    const { data } = await usersApi.post<Usuario[]>('/users/all', {
+      searchTerm: searchTerm.trim() || undefined,
     });
-    if (response.status === 201) {
-        return { success: true, data: response.data };
-    } else {
-        return { success: false, message: 'Error in employee search' };
-    }
+    return exito(data);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        switch (error.response.status) {
-          case 401:
-            console.error('Error 401: No autorizado.');
-            break;
-          case 403:
-            console.error('Error 403: No posees el permiso necesario para acceder al recurso.');
-            break;
-          case 500:
-            console.error('Error 500: Error del servidor.');
-            break;
-          default:
-            console.error(`Error ${error.response.status}: ${error.response.data}`);
-        }
-      } else if (error.request) {
-        console.error('No se recibió respuesta del servidor:', error.request);
-      } else {
-        console.error('Error al configurar la solicitud:', error.message);
-      }
-    } else {
-      console.error('Error desconocido:', error);
-    }
-    return { success: false, message: 'Error desconocido' };
+    return fallo(mensajeDeError(error, 'Error in employee search.'));
   }
 };
 
-const getMonthlyAverageHours = async () => {
-    try {
-      const tokenStore = useTokenStore.getState();
-      const token = tokenStore.token;
-      const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/statistics/monthly`;
-  
-      const response = await axios.get(endpoint, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      });
-  
-      if (response.status === 200) {
-        console.log("RESPONSE", response.data);
-        return { success: true, data: response.data };
-      } else {
-        return { success: false, message: 'Error fetching monthly average hours' };
-      }
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-          if (error.response) {
-            switch (error.response.status) {
-              case 401:
-                console.error('Error 401: No autorizado.');
-                break;
-              case 403:
-                console.error('Error 403: No posees el permiso necesario para acceder al recurso.');
-                break;
-              case 500:
-                console.error('Error 500: Error del servidor.');
-                break;
-              default:
-                console.error(`Error ${error.response.status}: ${error.response.data}`);
-            }
-          } else if (error.request) {
-            console.error('No se recibió respuesta del servidor:', error.request);
-          } else {
-            console.error('Error al configurar la solicitud:', error.message);
-          }
-        } else {
-          console.error('Error desconocido:', error);
-        }
-        return { success: false, message: 'Error desconocido' };
-      }
-};
-
-const getWeeklyAverageHours = async () => {
+const getMonthlyAverageHours = async (
+  userId: number,
+): Promise<Resultado<HorasMensuales[]>> => {
   try {
-    const tokenStore = useTokenStore.getState();
-    const token = tokenStore.token;
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/statistics/daily`;
-
-    const response = await axios.get(endpoint, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-    });
-
-    if (response.status === 200) {
-      return { success: true, data: response.data };
-    } else {
-      return { success: false, message: 'Error fetching daily average hours' };
-    }
+    const { data } = await marcajeApi.get<HorasMensuales[]>(
+      '/statistics/monthly',
+      { params: { userId } },
+    );
+    return exito(data);
   } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          switch (error.response.status) {
-            case 401:
-              console.error('Error 401: No autorizado.');
-              break;
-            case 403:
-              console.error('Error 403: No posees el permiso necesario para acceder al recurso.');
-              break;
-            case 500:
-              console.error('Error 500: Error del servidor.');
-              break;
-            default:
-              console.error(`Error ${error.response.status}: ${error.response.data}`);
-          }
-        } else if (error.request) {
-          console.error('No se recibió respuesta del servidor:', error.request);
-        } else {
-          console.error('Error al configurar la solicitud:', error.message);
-        }
-      } else {
-        console.error('Error desconocido:', error);
-      }
-      return { success: false, message: 'Error desconocido' };
-    }
+    return fallo(mensajeDeError(error, 'Error fetching monthly average hours.'));
+  }
 };
-    
 
-export default { viewGraphicsService, getMonthlyAverageHours, getWeeklyAverageHours};
+const getWeeklyAverageHours = async (
+  userId: number,
+): Promise<Resultado<HorasDiarias[]>> => {
+  try {
+    const { data } = await marcajeApi.get<HorasDiarias[]>('/statistics/daily', {
+      params: { userId },
+    });
+    return exito(data);
+  } catch (error) {
+    return fallo(mensajeDeError(error, 'Error fetching daily hours.'));
+  }
+};
+
+export default {
+  viewGraphicsService,
+  getMonthlyAverageHours,
+  getWeeklyAverageHours,
+};

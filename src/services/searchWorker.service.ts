@@ -1,82 +1,32 @@
-import axios from 'axios';
-import useTokenStore from '../stores/tokenStore';
+import { marcajeApi, usersApi } from './http';
+import { mensajeDeError } from '../lib/errors';
+import { exito, fallo, Marcaje, Resultado, Usuario } from './types';
 
-const searchWorkerService = async (searchTerm: string) => {
+const searchWorkerService = async (
+  searchTerm: string,
+): Promise<Resultado<Usuario[]>> => {
   try {
-    const tokenStore = useTokenStore.getState();
-    const token = tokenStore.token;
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/all`;
-
-    console.log('Token:', token);
-    console.log('Endpoint:', endpoint);
-
-    const response = await axios.post(endpoint, {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      console.log(response.data);
-    if (response.status === 201) {
-      return { success: true, data: response.data };
-    } else {
-      return { success: false, message: 'Error in employee search' };
-    }
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        switch (error.response.status) {
-          case 401:
-            console.error('Error 401: No autorizado.');
-            break;
-          case 403:
-            console.error('Error 403: No posees el permiso necesario para acceder al recurso.');
-            break;
-          case 500:
-            console.error('Error 500: Error del servidor.');
-            break;
-          default:
-            console.error(`Error ${error.response.status}: ${error.response.data}`);
-        }
-      } else if (error.request) {
-        console.error('No se recibió respuesta del servidor:', error.request);
-      } else {
-        console.error('Error al configurar la solicitud:', error.message);
-      }
-    } else {
-      console.error('Error desconocido:', error);
-    }
-    return { success: false, message: 'Error desconocido' };
-  }
-};
-
-
-const addTimeRegistrationService = async (date: string, idUser: number) => {
-  try {
-    const tokenStore = useTokenStore.getState();
-    const token = tokenStore.token;
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/marcaje/admin`;
-    console.log(endpoint);
-    const response = await axios.post(endpoint, {
-      token,
-      idUser: idUser,
-      date,
+    const { data } = await usersApi.post<Usuario[]>('/users/all', {
+      searchTerm: searchTerm.trim() || undefined,
     });
-
-    if (response.status === 201 || response.status === 200) {
-      if(response.data.success) {
-        return {success: true, data: response.data.data}
-      } else {
-        return {success: false, message: response.data.message}
-      }
-
-    } else {
-      return { success: false, message: 'Error al agregar el marcaje' };
-    }
+    return exito(data);
   } catch (error) {
-    console.error('Error al agregar el marcaje:', error);
-    return { success: false, message: 'Error desconocido' };
+    return fallo(mensajeDeError(error, 'Error in employee search.'));
   }
 };
 
-export { searchWorkerService, addTimeRegistrationService};
+const addTimeRegistrationService = async (
+  date: string,
+  idUser: number,
+): Promise<Resultado<Marcaje>> => {
+  try {
+    const { data } = await marcajeApi.post<
+      { success: true; data: Marcaje } | { success: false; message: string }
+    >('/marcaje/admin', { idUser, date });
+    return data.success ? exito(data.data) : fallo(data.message);
+  } catch (error) {
+    return fallo(mensajeDeError(error, 'Could not add the time registration.'));
+  }
+};
+
+export { searchWorkerService, addTimeRegistrationService };

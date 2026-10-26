@@ -1,32 +1,18 @@
-import axios from 'axios';
-
-export type editTimeRegistrationResponseT = {
-  success: boolean;
-  data?: string;
-  message?: string;
-};
+import { marcajeApi } from './http';
+import { mensajeDeError } from '../lib/errors';
+import { exito, fallo, Marcaje, Resultado } from './types';
 
 const editTimeRegistrationService = async (
   id: number,
-  data: { date: string; adminFlag: boolean }
-): Promise<editTimeRegistrationResponseT> => {
+  date: string,
+): Promise<Resultado<Marcaje>> => {
   try {
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_TIMEREGISTRATION_URL}/marcaje/admin/${id}`;
-    const response = await axios.patch(endpoint, data);
-    console.log("EditTimeRegistration service response:", response.data);
-
-    if (response.data.success === false) {
-      return { success: false, message: response.data.message };
-    }
-      
-    return {
-      success: true,
-      message: 'Time registration updated successfully!',
-      data: response.data
-    };
+    const { data } = await marcajeApi.patch<
+      { success: true; data: Marcaje } | { success: false; message: string }
+    >(`/marcaje/admin/${id}`, { date });
+    return data.success ? exito(data.data) : fallo(data.message);
   } catch (error) {
-    console.error('Error in editTimeRegistrationService:', error);
-    return { success: false, message: 'Something went wrong. Try again later.' };
+    return fallo(mensajeDeError(error, 'Could not update the time registration.'));
   }
 };
 

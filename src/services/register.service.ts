@@ -1,45 +1,28 @@
-import axios from 'axios';
+import { usersApi } from './http';
+import { mensajeDeError } from '../lib/errors';
+import { exito, fallo, Resultado } from './types';
 
-export type RegisterServiceResponseT = {
-  success: boolean;
-  data?: string;
-  message?: string; // Cambiado de error a message
+export type RegisterData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  pass: string;
+  birthday: string;
 };
 
-const registerService = async (
-  data: Record<string, string>
-): Promise<RegisterServiceResponseT> => {
+const registerService = async (data: RegisterData): Promise<Resultado> => {
   try {
-    const endpoint: string = `${process.env.EXPO_PUBLIC_MS_USER_URL}/users/register`;
-    const response = await axios.post(endpoint, data);
-    return { success: true, data: response.data };
-    
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        switch (error.response.status) {
-          case 400:
-            if (Array.isArray(error.response.data.message)) {
-              // Si es un array de mensajes, podrías combinarlos en un solo mensaje o manejarlos como necesites
-              const errorMessage = error.response.data.message.join(', ');
-              return { success: false, message: errorMessage };
-            } else {
-              // Si es un solo mensaje
-              return { success: false, message: error.response.data.message };
-            }
-          case 409:
-            return { success: false, message: 'Email en uso' };
-          default:
-            return { success: false, message: `Error ${error.response.status}: ${error.response.data}`}
-        }
-      } else if (error.request) {
-        return {success: false, message: `No se recibió respuesta del servidor: ${error.request}`};
-        };
-      } else {
-        return {success: false, message: `Error al configurar solicitud`};
-      }
-    } 
-    return { success: false, message: 'Error desconocido' };
+    await usersApi.post('/users/register', {
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      email: data.email.trim(),
+      pass: data.pass,
+      birthday: data.birthday.trim(),
+    });
+    return exito(undefined);
+  } catch (error) {
+    return fallo(mensajeDeError(error, 'Could not create your account.'));
+  }
 };
 
 export default registerService;
