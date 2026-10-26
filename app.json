@@ -11,18 +11,15 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
     "plugins": [
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location.",
-          "isAndroidBackgroundLocationEnabled": true,
-          "isAndroidForegroundServiceEnabled": true
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to register your check-in and check-out."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
-    
     "assetBundlePatterns": [
       "**/*"
     ],
