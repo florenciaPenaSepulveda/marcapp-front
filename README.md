@@ -14,8 +14,8 @@ Aplicación móvil de **Marcapp**, un sistema de control de asistencia para empr
 
 ## Qué incluye
 
-- **Trabajador:** registro de cuenta con requisitos de contraseña en vivo, ingreso, marcaje de entrada y salida con geolocalización y reloj en vivo, resumen semanal con horas por día y total, edición de su perfil y cierre de sesión.
-- **Administrador:** búsqueda de trabajadores, revisión y corrección de marcajes, aviso de entradas sin salida, creación de marcajes y gráficos de horas por semana y por año, con comparación entre varios trabajadores.
+- **Trabajador:** registro de cuenta con requisitos de contraseña en vivo, ingreso, marcaje de entrada y salida con geolocalización y reloj en vivo, resumen semanal con horas por día y total, resumen de las horas del mes en el inicio, edición de su perfil, cambio de contraseña y cierre de sesión.
+- **Administrador:** panorama de hoy en el inicio (quién está trabajando, quién terminó y quién no ha marcado); lista de todos los trabajadores con su estado de hoy, búsqueda en vivo y carga por páginas; al tocar un trabajador se abre su detalle con el resumen del mes y los marcajes de la semana, que puede corregir, agregar o eliminar; y estadísticas de horas por semana y por año, con comparación entre varios trabajadores.
 
 La interfaz usa un sistema de diseño propio (`src/theme.ts` y `src/components/ui.tsx`): tarjetas, botones, campos con validación y accesibilidad, avisos, paneles inferiores y un gráfico de barras sin librerías externas. Todas las pantallas internas tienen encabezado con flecha para volver.
 
@@ -58,7 +58,7 @@ npm run test:cov
 npm run typecheck
 ```
 
-Hay 99 pruebas sobre validaciones, cálculo de horarios, manejo de errores, servicios HTTP, almacenamiento y sesión, los componentes de interfaz y las pantallas de ingreso e inicio, con cerca de 98 % de cobertura sobre ese código. El CI revisa tipos, ejecuta las pruebas, comprueba las versiones con `expo-doctor` y empaqueta la versión web.
+Hay 126 pruebas sobre validaciones, cálculo de horarios, manejo de errores, servicios HTTP, el hook de trabajadores, almacenamiento y sesión, los componentes de interfaz y las pantallas de ingreso, inicio y cambio de contraseña, con cerca de 98 % de cobertura sobre ese código. El CI revisa tipos, ejecuta las pruebas, comprueba las versiones con `expo-doctor` y empaqueta la versión web.
 
 ## Dependencias
 
