@@ -83,6 +83,9 @@
         "functions": 85,
         "lines": 85
       }
-    }
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.after.js"
+    ]
   }
 }
