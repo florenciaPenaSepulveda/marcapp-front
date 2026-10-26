@@ -85,7 +85,24 @@ const deleteTimeRegistrationService = async (id: number): Promise<Resultado> => 
   }
 };
 
+const deleteWorkerService = async (
+  id: number,
+): Promise<Resultado<{ registrationsRemoved: boolean }>> => {
+  try {
+    await usersApi.delete(`/users/${id}`);
+  } catch (error) {
+    return fallo(mensajeDeError(error, 'Could not delete the worker.'));
+  }
+  try {
+    await marcajeApi.delete(`/marcaje/admin/user/${id}`);
+    return exito({ registrationsRemoved: true });
+  } catch {
+    return exito({ registrationsRemoved: false });
+  }
+};
+
 export {
+  deleteWorkerService,
   searchWorkerService,
   teamStatusService,
   userStatsService,
