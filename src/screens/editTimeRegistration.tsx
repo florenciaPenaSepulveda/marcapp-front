@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react';
-import { Box, Button, Center, Input, Text, VStack, AlertDialog } from 'native-base';
+import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
-import { Header } from 'react-native-elements';
-import { View } from 'react-native';
 import editTimeRegistrationService from '../services/editTimeRegistration.service';
 import { validarFechaHora } from '../lib/validation';
-import styles from '../styles/editTimeRegistration.styles';
+import { Badge, Button, Card, Dialog, Field, Notice, Screen } from '../components/ui';
+import { colors, font, spacing } from '../theme';
 
 const EditTimeRegistration = () => {
   const navigation =
@@ -20,84 +20,86 @@ const EditTimeRegistration = () => {
   };
 
   const [fecha, setFecha] = useState<string>(date);
-  const [alert, setAlert] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>('');
+  const [error, setError] = useState<string>('');
   const [guardado, setGuardado] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const cancelRef = useRef(null);
-
-  const mostrar = (texto: string, exito = false) => {
-    setMessage(texto);
-    setGuardado(exito);
-    setAlert(true);
-  };
+  const exito = useRef(false);
 
   const onEdit = async () => {
-    const error = validarFechaHora(fecha);
-    if (error) {
-      mostrar(error);
+    const invalida = validarFechaHora(fecha);
+    if (invalida) {
+      setError(invalida);
       return;
     }
+    setError('');
     setLoading(true);
     const response = await editTimeRegistrationService(Number(id), fecha);
     setLoading(false);
     if (response.success) {
-      mostrar('Time registration updated successfully!', true);
+      exito.current = true;
+      setGuardado(true);
     } else {
-      mostrar(response.message);
+      setError(response.message);
     }
   };
 
   const cerrar = () => {
-    setAlert(false);
-    if (guardado) {
+    setGuardado(false);
+    if (exito.current) {
       navigation.goBack();
     }
   };
 
+  const esEntrada = type === 'entry';
+
   return (
-    <Box style={styles.container}>
-      <Header
-        centerComponent={{
-          text: 'Edit time registration',
-          style: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
-        }}
-        containerStyle={{
-          backgroundColor: '#0AA5F2',
-          justifyContent: 'space-around',
-        }}
-      />
-      <AlertDialog leastDestructiveRef={cancelRef} isOpen={alert} onClose={cerrar}>
-        <AlertDialog.Content>
-          <AlertDialog.CloseButton />
-          <AlertDialog.Body>{message}</AlertDialog.Body>
-        </AlertDialog.Content>
-      </AlertDialog>
-      <VStack space={4} alignItems="center">
-        <Center>
-          <Text style={styles.description}>
-            Edit this {type} time registration date
-          </Text>
-        </Center>
-        <Center>
-          <Input
-            style={styles.input}
-            size="l"
-            variant="outline"
-            placeholder="Format: DD-MM-YYYY HH:mm:ss"
-            value={fecha}
-            autoCapitalize="none"
-            onChange={(e) => setFecha(e.nativeEvent.text)}
-          />
-        </Center>
-        <View style={styles.testContainer}>
-          <Button isLoading={loading} onPress={onEdit}>
-            Save changes
-          </Button>
+    <Screen style={styles.content}>
+      <Card style={styles.current}>
+        <Ionicons
+          name={esEntrada ? 'log-in-outline' : 'log-out-outline'}
+          size={30}
+          color={esEntrada ? colors.success : colors.danger}
+        />
+        <View style={styles.flex}>
+          <Text style={font.small}>Current {esEntrada ? 'check-in' : 'check-out'}</Text>
+          <Text style={font.heading}>{date}</Text>
         </View>
-      </VStack>
-    </Box>
+        <Badge label={esEntrada ? 'Entry' : 'Exit'} tone={esEntrada ? 'success' : 'danger'} />
+      </Card>
+
+      <Card style={styles.form}>
+        {error !== '' && <Notice tone="danger">{error}</Notice>}
+        <Field
+          label="New date and time"
+          placeholder="DD-MM-YYYY HH:mm:ss"
+          value={fecha}
+          autoCapitalize="none"
+          hint="The record must stay on the same day, and exit must be after entry."
+          onChangeText={(texto) => {
+            setFecha(texto);
+            setError('');
+          }}
+        />
+        <Button title="Save changes" onPress={onEdit} loading={loading} />
+        <Button title="Cancel" variant="ghost" onPress={() => navigation.goBack()} />
+      </Card>
+
+      <Dialog
+        visible={guardado}
+        tone="success"
+        title="Registration updated"
+        message="The time registration was saved."
+        onClose={cerrar}
+      />
+    </Screen>
   );
 };
+
+const styles = StyleSheet.create({
+  content: { maxWidth: 520, width: '100%', alignSelf: 'center' },
+  flex: { flex: 1 },
+  current: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  form: { gap: spacing.lg, padding: spacing.xl },
+});
 
 export default EditTimeRegistration;

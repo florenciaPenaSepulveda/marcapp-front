@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
-import { Spinner, Text } from 'native-base';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { Button } from 'react-native-elements';
 import { RootStackParamList } from '../../Router';
 import healthcheckService from '../services/healthcheck.service';
 import profileService from '../services/profile.service';
 import { MARCAJE_URL, USERS_URL } from '../config';
 import useTokenStore from '../stores/tokenStore';
-import styles from '../styles/loading.styles';
+import { Button } from '../components/ui';
+import { colors, font, radius, spacing } from '../theme';
 
 const Loading = () => {
   const navigation =
@@ -24,7 +24,7 @@ const Loading = () => {
       healthcheckService(MARCAJE_URL),
     ]);
     if (!usuariosListo || !marcajeListo) {
-      setErrorMessage('Problems connecting to the server.');
+      setErrorMessage('We could not connect to the server. Check your connection and try again.');
       return;
     }
 
@@ -50,19 +50,47 @@ const Loading = () => {
 
   return (
     <View style={styles.screen}>
+      <View style={styles.logo}>
+        <Ionicons name="time" size={44} color="#fff" />
+      </View>
+      <Text style={styles.brand}>MarcApp</Text>
       {errorMessage ? (
-        <View style={styles.content}>
-          <Text style={styles.container}>{errorMessage}</Text>
-          <Button title="Try again" onPress={iniciar} />
+        <View style={styles.error}>
+          <Ionicons name="cloud-offline-outline" size={32} color={colors.danger} />
+          <Text style={[font.body, styles.center]}>{errorMessage}</Text>
+          <Button title="Try again" onPress={iniciar} icon="refresh" />
         </View>
       ) : (
-        <View>
-          <Spinner size="xl" accessibilityLabel="Loading" />
-          <Text style={styles.container}>Starting</Text>
+        <View style={styles.loader}>
+          <ActivityIndicator size="large" color={colors.primary} accessibilityLabel="Loading" />
+          <Text style={font.small}>Starting…</Text>
         </View>
       )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
+    padding: spacing.xl,
+    gap: spacing.md,
+  },
+  logo: {
+    width: 88,
+    height: 88,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brand: { ...font.title },
+  loader: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.lg },
+  error: { alignItems: 'center', gap: spacing.md, marginTop: spacing.lg, maxWidth: 320 },
+  center: { textAlign: 'center' },
+});
 
 export default Loading;

@@ -1,9 +1,7 @@
 import { useRef, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { AlertDialog, Box, Button, Center, FormControl, Input, Text, VStack } from 'native-base';
+import { StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/core';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Header } from 'react-native-elements';
 import { RootStackParamList } from '../../Router';
 import useUserStore from '../stores/useStore';
 import editService, { EditProfileData } from '../services/editprofile.service';
@@ -13,7 +11,8 @@ import {
   validarFechaNacimiento,
   validarNombre,
 } from '../lib/validation';
-import styles from '../styles/editProfile.styles';
+import { Button, Card, Dialog, Field, Notice, Screen } from '../components/ui';
+import { spacing } from '../theme';
 
 type Errores = Partial<Record<keyof EditProfileData, string>>;
 
@@ -36,13 +35,12 @@ const EditProfile = () => {
     email: user.email,
   });
   const [errores, setErrores] = useState<Errores>({});
-  const [alert, setAlert] = useState<boolean>(false);
-  const [message, setMessage] = useState<string>('');
+  const [errorGeneral, setErrorGeneral] = useState<string>('');
+  const [guardado, setGuardado] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const cancelRef = useRef(null);
-  const guardado = useRef(false);
+  const exito = useRef(false);
 
   const setValue = (key: keyof EditProfileData, value: string) => {
     setData((prevState) => ({ ...prevState, [key]: value }));
@@ -52,6 +50,7 @@ const EditProfile = () => {
   const onEdit = async () => {
     const encontrados = validar(data);
     setErrores(encontrados);
+    setErrorGeneral('');
     if (Object.keys(encontrados).length > 0) {
       return;
     }
@@ -59,79 +58,76 @@ const EditProfile = () => {
     const response = await editService(data);
     setLoading(false);
     if (response.success) {
-      guardado.current = true;
+      exito.current = true;
       user.setFirstName(response.data.firstName);
       user.setLastName(response.data.lastName);
       user.setBirthday(response.data.birthday);
       user.setEmail(response.data.email);
-      setMessage('Profile updated successfully!');
+      setGuardado(true);
     } else {
-      setMessage(response.message);
+      setErrorGeneral(response.message);
     }
-    setAlert(true);
   };
 
-  const cerrarAlerta = () => {
-    setAlert(false);
-    if (guardado.current) {
+  const cerrar = () => {
+    setGuardado(false);
+    if (exito.current) {
       navigation.goBack();
     }
   };
 
-  const campo = (clave: keyof EditProfileData, placeholder: string) => (
-    <Center>
-      <FormControl isInvalid={Boolean(errores[clave])} maxWidth={320}>
-        <Input
-          style={styles.input}
-          size="l"
-          variant="outline"
-          placeholder={placeholder}
-          value={data[clave]}
-          autoCapitalize={clave === 'email' || clave === 'birthday' ? 'none' : 'words'}
-          keyboardType={clave === 'email' ? 'email-address' : 'default'}
-          onChangeText={(texto) => setValue(clave, texto)}
-        />
-        <FormControl.ErrorMessage>{errores[clave]}</FormControl.ErrorMessage>
-      </FormControl>
-    </Center>
-  );
-
   return (
-    <Box style={styles.container}>
-      <Header
-        centerComponent={{
-          text: 'Edit profile',
-          style: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
-        }}
-        containerStyle={{
-          backgroundColor: '#0AA5F2',
-          justifyContent: 'space-around',
-        }}
+    <Screen style={styles.content}>
+      <Card style={styles.form}>
+        {errorGeneral !== '' && <Notice tone="danger">{errorGeneral}</Notice>}
+        <Field
+          label="First name"
+          value={data.firstName}
+          autoCapitalize="words"
+          error={errores.firstName}
+          onChangeText={(texto) => setValue('firstName', texto)}
+        />
+        <Field
+          label="Last name"
+          value={data.lastName}
+          autoCapitalize="words"
+          error={errores.lastName}
+          onChangeText={(texto) => setValue('lastName', texto)}
+        />
+        <Field
+          label="Birthday"
+          placeholder={FORMATO_FECHA_NACIMIENTO}
+          value={data.birthday}
+          autoCapitalize="none"
+          hint={`Format ${FORMATO_FECHA_NACIMIENTO}`}
+          error={errores.birthday}
+          onChangeText={(texto) => setValue('birthday', texto)}
+        />
+        <Field
+          label="Email"
+          value={data.email}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          error={errores.email}
+          onChangeText={(texto) => setValue('email', texto)}
+        />
+        <Button title="Save changes" onPress={onEdit} loading={loading} />
+        <Button title="Cancel" variant="ghost" onPress={() => navigation.goBack()} />
+      </Card>
+      <Dialog
+        visible={guardado}
+        tone="success"
+        title="Profile updated"
+        message="Your changes were saved."
+        onClose={cerrar}
       />
-      <AlertDialog leastDestructiveRef={cancelRef} isOpen={alert} onClose={cerrarAlerta}>
-        <AlertDialog.Content>
-          <AlertDialog.CloseButton />
-          <AlertDialog.Body>{message}</AlertDialog.Body>
-        </AlertDialog.Content>
-      </AlertDialog>
-      <ScrollView keyboardShouldPersistTaps="handled">
-        <VStack space={4} alignItems="center">
-          <Center>
-            <Text style={styles.description}>Edit your profile data</Text>
-          </Center>
-          {campo('firstName', 'First name')}
-          {campo('lastName', 'Last name')}
-          {campo('birthday', `Birthday (${FORMATO_FECHA_NACIMIENTO})`)}
-          {campo('email', 'E-mail address (format: user@mail.abc)')}
-          <View style={styles.testContainer}>
-            <Button isLoading={loading} onPress={onEdit}>
-              Save changes
-            </Button>
-          </View>
-        </VStack>
-      </ScrollView>
-    </Box>
+    </Screen>
   );
 };
+
+const styles = StyleSheet.create({
+  content: { maxWidth: 520, width: '100%', alignSelf: 'center' },
+  form: { gap: spacing.lg, padding: spacing.xl },
+});
 
 export default EditProfile;

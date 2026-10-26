@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
-import { Button, Input, Text } from 'react-native-elements';
+import { StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import loginService from '../services/login.service';
 import { validarEmail } from '../lib/validation';
-import styles from '../styles/login.styles';
+import { Button, Card, Field, Notice, Screen } from '../components/ui';
+import { colors, font, radius, spacing } from '../theme';
 
 const Login = () => {
   const navigation =
@@ -38,16 +39,21 @@ const Login = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.marcapp}>MarcApp</Text>
-        <Input
+    <Screen style={styles.content}>
+      <View style={styles.hero}>
+        <View style={styles.logo}>
+          <Ionicons name="time" size={40} color="#fff" />
+        </View>
+        <Text style={font.title}>MarcApp</Text>
+        <Text style={[font.small, styles.center]}>
+          Track your work hours, anywhere.
+        </Text>
+      </View>
+
+      <Card style={styles.form}>
+        <Text style={font.heading}>Welcome back</Text>
+        {errorMessage !== '' && <Notice tone="danger">{errorMessage}</Notice>}
+        <Field
           label="Email"
           placeholder="mail@example.cl"
           value={email}
@@ -55,40 +61,55 @@ const Login = () => {
           autoCapitalize="none"
           autoComplete="email"
           autoCorrect={false}
-          errorMessage={errorEmail ?? undefined}
+          error={errorEmail}
           onChangeText={setEmail}
         />
-        <Input
-          secureTextEntry
+        <Field
           label="Password"
-          placeholder="********"
+          placeholder="Your password"
           value={password}
+          secure
           autoCapitalize="none"
           autoComplete="current-password"
-          errorMessage={errorClave ?? undefined}
+          error={errorClave}
           onChangeText={setPassword}
           onSubmitEditing={onLogin}
+          returnKeyType="go"
         />
-        {errorMessage !== '' && (
-          <Text style={styles.error} accessibilityRole="alert">
-            {errorMessage}
-          </Text>
-        )}
-        <Button title="Login" onPress={onLogin} loading={loading} />
-        <View style={styles.login}>
-          <Text
-            onPress={() => navigation.navigate('Register')}
-            style={styles.signup}
-          >
-            Sign Up
-          </Text>
-        </View>
-        <Text style={styles.copyright}>
-          © 2024 Palta con Pan. All rights reserved.
-        </Text>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Button title="Log in" onPress={onLogin} loading={loading} />
+      </Card>
+
+      <View style={styles.signup}>
+        <Text style={font.body}>New here?</Text>
+        <Button
+          title="Create an account"
+          variant="ghost"
+          onPress={() => navigation.navigate('Register')}
+          style={styles.link}
+        />
+      </View>
+      <Text style={[font.small, styles.center]}>
+        © 2024 Palta con Pan. All rights reserved.
+      </Text>
+    </Screen>
   );
 };
+
+const styles = StyleSheet.create({
+  content: { flexGrow: 1, justifyContent: 'center', maxWidth: 480, width: '100%', alignSelf: 'center' },
+  hero: { alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  logo: {
+    width: 76,
+    height: 76,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  form: { gap: spacing.lg, padding: spacing.xl },
+  signup: { alignItems: 'center' },
+  link: { minHeight: 40 },
+  center: { textAlign: 'center' },
+});
 
 export default Login;

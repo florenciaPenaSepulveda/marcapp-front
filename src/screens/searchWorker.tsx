@@ -1,28 +1,19 @@
 import React, { useState } from 'react';
-import { Text, ListItem, Button, Header } from 'react-native-elements';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import moment from 'moment';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../Router';
 import {
   searchWorkerService,
   addTimeRegistrationService,
 } from '../services/searchWorker.service';
-import {
-  View,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  Modal,
-  TouchableHighlight,
-} from 'react-native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../Router';
-import moment from 'moment';
 import weeklySummaryService from '../services/weeklySummary.service';
 import { Marcaje, Usuario } from '../services/types';
-import { colorDeAvatar, inicial } from '../lib/avatar';
+import { agruparPorDia, diasSinSalida } from '../lib/horarios';
 import { validarFechaHora } from '../lib/validation';
-import { Box } from 'native-base';
-import styles from '../styles/searchWorker.styles';
+import { Avatar, Badge, Button, Card, EmptyState, Field, Notice, Screen, Sheet } from '../components/ui';
+import { colors, font, spacing } from '../theme';
 
 type SearchWorkerProps = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -30,24 +21,17 @@ type SearchWorkerProps = {
 
 const FORMATO = 'DD-MM-YYYY';
 
-const findMissingExits = (registrations: Marcaje[]): string[] => {
-  const pendientes: Record<string, boolean> = {};
-  registrations.forEach((reg) => {
-    const dia = reg.date.split(' ')[0];
-    pendientes[dia] = reg.type === 'entry' ? pendientes[dia] !== false : false;
-  });
-  return Object.keys(pendientes).filter((dia) => pendientes[dia]);
-};
-
 const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<Usuario[]>([]);
+  const [searchResults, setSearchResults] = useState<Usuario[] | null>(null);
   const [timeRegistrations, setTimeRegistrations] = useState<Marcaje[]>([]);
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sheetError, setSheetError] = useState<string | null>(null);
+  const [sheetInfo, setSheetInfo] = useState<string | null>(null);
   const [newDate, setNewDate] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -56,54 +40,62 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     setLoading(false);
     if (results.success) {
       setSearchResults(results.data);
-      if (results.data.length === 0) {
-        setErrorMessage('There are no results.');
-      }
     } else {
-      setSearchResults([]);
+      setSearchResults(null);
       setErrorMessage(results.message);
     }
   };
 
-  const obtainTimeRegistration = async (idUser: number) => {
+  const loadWeek = async (user: Usuario) => {
     const semana = moment().startOf('isoWeek');
     const response = await weeklySummaryService(
       semana.format(FORMATO),
       semana.clone().endOf('isoWeek').format(FORMATO),
-      idUser,
+      user.id,
     );
-    setSelectedUser(idUser);
     if (response.success) {
       setTimeRegistrations(response.data);
-      setModalVisible(true);
-    } else {
-      setTimeRegistrations([]);
-      setErrorMessage(response.message);
+      return true;
     }
+    setTimeRegistrations([]);
+    setSheetError(response.message);
+    return false;
+  };
+
+  const openUser = async (user: Usuario) => {
+    setSelectedUser(user);
+    setSheetError(null);
+    setSheetInfo(null);
+    setNewDate('');
+    setTimeRegistrations([]);
+    setSheetVisible(true);
+    await loadWeek(user);
   };
 
   const handleAddTimeRegistration = async () => {
-    if (selectedUser === null) {
-      setErrorMessage('Select a worker first.');
+    if (!selectedUser) {
       return;
     }
     const error = validarFechaHora(newDate);
     if (error) {
-      setErrorMessage(error);
+      setSheetError(error);
+      setSheetInfo(null);
       return;
     }
-    const response = await addTimeRegistrationService(newDate, selectedUser);
+    const response = await addTimeRegistrationService(newDate, selectedUser.id);
     if (response.success) {
-      setErrorMessage('Time Registration successfully added');
+      setSheetError(null);
+      setSheetInfo('Time registration added.');
       setNewDate('');
-      obtainTimeRegistration(selectedUser);
+      await loadWeek(selectedUser);
     } else {
-      setErrorMessage(response.message);
+      setSheetInfo(null);
+      setSheetError(response.message);
     }
   };
 
-  const goEditTimeRegistration = (registration: Marcaje) => {
-    setModalVisible(false);
+  const goEdit = (registration: Marcaje) => {
+    setSheetVisible(false);
     navigation.navigate('EditTimeRegistration', {
       id: registration.id.toString(),
       date: registration.date,
@@ -111,157 +103,118 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     });
   };
 
-  const sinSalida = findMissingExits(timeRegistrations);
+  const sinSalida = diasSinSalida(agruparPorDia(timeRegistrations));
+  const ordenadas = [...timeRegistrations].sort(
+    (a, b) => moment(b.date, 'DD-MM-YYYY HH:mm:ss').valueOf() - moment(a.date, 'DD-MM-YYYY HH:mm:ss').valueOf(),
+  );
 
   return (
-    <Box style={styles.container}>
-      <Header
-        centerComponent={{
-          text: 'Search worker',
-          style: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
-        }}
-        containerStyle={{
-          backgroundColor: '#0AA5F2',
-          justifyContent: 'space-around',
-        }}
-      />
-      <Text style={styles.subtitle}>
-        Please type the worker's name you want to search
-      </Text>
-      <View style={styles.container}>
-        <TextInput
-          style={styles.input}
-          placeholder="Search employee"
+    <Screen style={styles.content}>
+      <Card style={styles.search}>
+        <Field
+          label="Search workers"
+          placeholder="Name or email"
+          value={searchTerm}
+          autoCapitalize="none"
+          returnKeyType="search"
           onChangeText={setSearchTerm}
           onSubmitEditing={handleSearch}
-          value={searchTerm}
-          returnKeyType="search"
         />
+        <Button title="Search" icon="search" onPress={handleSearch} loading={loading} />
+      </Card>
 
-        <Button title="Search" onPress={handleSearch} buttonStyle={styles.button} />
+      {errorMessage && <Notice tone="danger">{errorMessage}</Notice>}
 
-        {loading && <ActivityIndicator size="large" color="#4287f5" />}
+      {searchResults !== null && searchResults.length === 0 && (
+        <EmptyState icon="search-outline" title="No results" message="Try another name or email." />
+      )}
 
-        {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-
-        <FlatList
-          data={searchResults}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <ListItem onPress={() => obtainTimeRegistration(item.id)}>
-              <View
-                style={[
-                  styles.profilePicture,
-                  { backgroundColor: colorDeAvatar(item.firstName) },
-                ]}
-              >
-                <Text style={styles.initial}>{inicial(item.firstName)}</Text>
-              </View>
-              <View style={styles.userInfo}>
-                <ListItem.Content>
-                  <ListItem.Title>
-                    {item.firstName} {item.lastName}
-                  </ListItem.Title>
-                  <ListItem.Subtitle>E-mail: {item.email}</ListItem.Subtitle>
-                  <ListItem.Subtitle>User ID: {item.id}</ListItem.Subtitle>
-                  <ListItem.Subtitle>
-                    Birthday: {item.birthday.split('T')[0]}
-                  </ListItem.Subtitle>
-                </ListItem.Content>
-              </View>
-            </ListItem>
-          )}
-        />
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalBackground}>
-            <View style={styles.modalContent}>
-              <TouchableHighlight
-                style={styles.closeButton}
-                onPress={() => setModalVisible(false)}
-                accessibilityLabel="Close"
-              >
-                <Text style={styles.closeButtonText}>x</Text>
-              </TouchableHighlight>
-              <Text style={styles.sectionTitle}>
-                Time registrations for User N° {selectedUser} in this week:
-              </Text>
-              {timeRegistrations.length === 0 ? (
-                <Text style={styles.noRegistrationsText}>
-                  There are no registrations in this period
-                </Text>
-              ) : (
-                <ScrollView style={styles.scrollContainer}>
-                  {timeRegistrations.map((registration, index) => (
-                    <TouchableOpacity
-                      key={registration.id}
-                      style={styles.registrationInfo}
-                      onPress={() => goEditTimeRegistration(registration)}
-                    >
-                      <Text
-                        style={
-                          registration.type === 'entry'
-                            ? styles.entryText
-                            : styles.exitText
-                        }
-                      >
-                        {registration.type.toUpperCase()}
-                      </Text>
-                      <Text>
-                        Registration {index + 1}: {registration.date}
-                      </Text>
-                      <Text>Register ID: {registration.id}</Text>
-                      {registration.latCoordinate && registration.longCoordinate ? (
-                        <Text>
-                          Location: {registration.latCoordinate},{' '}
-                          {registration.longCoordinate}
-                        </Text>
-                      ) : (
-                        <Text style={styles.noLocation}>Location not available</Text>
-                      )}
-                      <Text>
-                        Modified by administrator: {registration.adminFlag ? 'Yes' : 'No'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-          </View>
-        </Modal>
-
-        {sinSalida.length > 0 && (
-          <Text style={styles.warningMessage}>
-            The following days have entries with no registered exit:{' '}
-            {sinSalida.join(', ')}
-          </Text>
-        )}
-        {selectedUser !== null && (
-          <View style={styles.formContainer}>
-            <Text style={styles.sectionTitle}>
-              Add time registration for User N° {selectedUser}
+      {searchResults?.map((user) => (
+        <Card key={user.id} onPress={() => openUser(user)} accessibilityLabel={`${user.firstName} ${user.lastName}`} style={styles.user}>
+          <Avatar name={user.firstName} />
+          <View style={styles.flex}>
+            <Text style={font.heading}>
+              {user.firstName} {user.lastName}
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Date (DD-MM-YYYY HH:mm:ss)"
-              onChangeText={setNewDate}
-              value={newDate}
-              autoCapitalize="none"
-            />
-            <Button
-              title="Add Time Registration"
-              onPress={handleAddTimeRegistration}
-              buttonStyle={styles.button}
-            />
+            <Text style={font.small}>{user.email}</Text>
+            <Text style={font.small}>ID {user.id}</Text>
           </View>
-        )}
-      </View>
-    </Box>
+          <Ionicons name="chevron-forward" size={22} color={colors.muted} />
+        </Card>
+      ))}
+
+      <Sheet
+        visible={sheetVisible}
+        title={selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName} · this week` : ''}
+        onClose={() => setSheetVisible(false)}
+      >
+        <View style={styles.sheetBody}>
+          {sheetError && <Notice tone="danger">{sheetError}</Notice>}
+          {sheetInfo && <Notice tone="success">{sheetInfo}</Notice>}
+          {sinSalida.length > 0 && (
+            <Notice tone="warning">Missing check-out on: {sinSalida.join(', ')}.</Notice>
+          )}
+
+          {ordenadas.length === 0 && !sheetError && (
+            <EmptyState icon="time-outline" title="No registrations this week" />
+          )}
+          {ordenadas.map((registration) => (
+            <Pressable
+              key={registration.id}
+              onPress={() => goEdit(registration)}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${registration.type} ${registration.date}`}
+              style={({ pressed }) => [styles.record, pressed && styles.pressed]}
+            >
+              <Ionicons
+                name={registration.type === 'entry' ? 'log-in-outline' : 'log-out-outline'}
+                size={24}
+                color={registration.type === 'entry' ? colors.success : colors.danger}
+              />
+              <View style={styles.flex}>
+                <Text style={font.heading}>{registration.date}</Text>
+                <Text style={font.small}>
+                  {registration.latCoordinate && registration.longCoordinate
+                    ? `Location: ${registration.latCoordinate}, ${registration.longCoordinate}`
+                    : 'Location not available'}
+                </Text>
+                {registration.adminFlag && <Badge label="Edited by admin" tone="warning" />}
+              </View>
+              <Ionicons name="create-outline" size={22} color={colors.primary} />
+            </Pressable>
+          ))}
+
+          <Text style={font.heading}>Add a registration</Text>
+          <Field
+            label="Date and time"
+            placeholder="DD-MM-YYYY HH:mm:ss"
+            value={newDate}
+            autoCapitalize="none"
+            onChangeText={setNewDate}
+          />
+          <Button title="Add registration" icon="add" onPress={handleAddTimeRegistration} />
+        </View>
+      </Sheet>
+    </Screen>
   );
 };
+
+const styles = StyleSheet.create({
+  content: { maxWidth: 640, width: '100%', alignSelf: 'center' },
+  flex: { flex: 1, gap: 2 },
+  search: { gap: spacing.md },
+  user: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  sheetBody: { gap: spacing.md, paddingBottom: spacing.lg },
+  record: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  pressed: { backgroundColor: colors.primarySoft },
+});
 
 export default SearchWorker;

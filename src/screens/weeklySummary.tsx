@@ -1,29 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
-import { Box } from 'native-base';
-import { Header, Text } from 'react-native-elements';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
 import useUserStore from '../stores/useStore';
 import weeklySummaryService from '../services/weeklySummary.service';
 import { Marcaje } from '../services/types';
-import styles from '../styles/weeklySummary.styles';
+import { agruparPorDia, diasSinSalida, formatearHoras, hora, totalDeHoras } from '../lib/horarios';
+import { Badge, Button, Card, EmptyState, Notice, Screen } from '../components/ui';
+import { colors, font, spacing } from '../theme';
 
 const FORMATO = 'DD-MM-YYYY';
 
 const formatDate = (date: moment.Moment) =>
-  date.year() !== moment().year()
-    ? date.format('DD MMMM YYYY')
-    : date.format('DD MMMM');
+  date.year() !== moment().year() ? date.format('D MMM YYYY') : date.format('D MMM');
 
 const WeeklySummary = () => {
   const userId = useUserStore((state) => state.id);
   const [timeRegistrations, setTimeRegistrations] = useState<Marcaje[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [currentWeek, setCurrentWeek] = useState(() =>
-    moment().startOf('isoWeek'),
-  );
+  const [currentWeek, setCurrentWeek] = useState(() => moment().startOf('isoWeek'));
   const finDeSemana = currentWeek.clone().endOf('isoWeek');
+  const esSemanaActual = currentWeek.isSame(moment().startOf('isoWeek'), 'day');
 
   const fetchWeeklyData = useCallback(async () => {
     setLoading(true);
@@ -46,83 +44,130 @@ const WeeklySummary = () => {
     fetchWeeklyData();
   }, [fetchWeeklyData]);
 
+  const jornadas = useMemo(() => agruparPorDia(timeRegistrations), [timeRegistrations]);
+  const pendientes = diasSinSalida(jornadas);
+
   const cambiarSemana = (semanas: number) =>
     setCurrentWeek((semana) => semana.clone().add(semanas, 'week'));
 
   return (
-    <Box style={styles.container}>
-      <Header
-        centerComponent={{
-          text: 'My Weekly Summary',
-          style: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
-        }}
-        containerStyle={{
-          backgroundColor: '#0AA5F2',
-          justifyContent: 'space-around',
-        }}
-      />
-      <View style={styles.navigationContainer}>
-        <Text
+    <Screen style={styles.content}>
+      <Card style={styles.weekBar}>
+        <Pressable
           onPress={() => cambiarSemana(-1)}
-          style={styles.navigateLeft}
+          hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel="Previous week"
+          style={styles.arrow}
         >
-          {'<'}
-        </Text>
-        <Text style={styles.weekText}>
-          {formatDate(currentWeek)} - {formatDate(finDeSemana)}
-        </Text>
-        <Text
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </Pressable>
+        <View style={styles.weekCenter}>
+          <Text style={font.heading}>
+            {formatDate(currentWeek)} – {formatDate(finDeSemana)}
+          </Text>
+          <Text style={font.small}>{esSemanaActual ? 'This week' : 'Week ' + currentWeek.isoWeek()}</Text>
+        </View>
+        <Pressable
           onPress={() => cambiarSemana(1)}
-          style={styles.navigateRight}
+          disabled={esSemanaActual}
+          hitSlop={12}
           accessibilityRole="button"
           accessibilityLabel="Next week"
+          style={[styles.arrow, esSemanaActual && styles.arrowDisabled]}
         >
-          {'>'}
-        </Text>
-      </View>
-      {loading && <ActivityIndicator size="large" color="#0AA5F2" />}
-      {errorMessage !== '' && (
-        <Text style={styles.noRegistrationsText} accessibilityRole="alert">
-          {errorMessage}
-        </Text>
+          <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+        </Pressable>
+      </Card>
+
+      {!esSemanaActual && (
+        <Button
+          title="Back to this week"
+          variant="ghost"
+          onPress={() => setCurrentWeek(moment().startOf('isoWeek'))}
+        />
       )}
-      <ScrollView style={styles.scrollView}>
-        {!loading && !errorMessage && timeRegistrations.length === 0 ? (
-          <Text style={styles.noRegistrationsText}>
-            There are no registrations on this period
-          </Text>
-        ) : (
-          timeRegistrations.map((registration, index) => (
-            <View key={registration.id} style={styles.registrationInfo}>
-              <Text
-                style={
-                  registration.type === 'entry'
-                    ? styles.entryText
-                    : styles.exitText
-                }
-              >
-                {registration.type.toUpperCase()}
-              </Text>
-              <Text>
-                Registration {index + 1}: {registration.date}
-              </Text>
-              <Text>Registration ID: {registration.id}</Text>
-              {registration.latCoordinate && registration.longCoordinate ? (
-                <Text>
-                  Registration Location: {registration.latCoordinate},{' '}
-                  {registration.longCoordinate}
-                </Text>
-              ) : (
-                <Text style={styles.noLocation}>Location not available</Text>
-              )}
+
+      {loading && <ActivityIndicator size="large" color={colors.primary} />}
+      {errorMessage !== '' && (
+        <>
+          <Notice tone="danger">{errorMessage}</Notice>
+          <Button title="Try again" icon="refresh" onPress={fetchWeeklyData} />
+        </>
+      )}
+
+      {!loading && !errorMessage && jornadas.length > 0 && (
+        <Card style={styles.total}>
+          <Text style={font.small}>Total this week</Text>
+          <Text style={styles.totalValue}>{formatearHoras(totalDeHoras(jornadas))}</Text>
+        </Card>
+      )}
+
+      {pendientes.length > 0 && (
+        <Notice tone="warning">
+          Missing check-out on: {pendientes.join(', ')}.
+        </Notice>
+      )}
+
+      {!loading && !errorMessage && jornadas.length === 0 && (
+        <EmptyState
+          icon="calendar-clear-outline"
+          title="No registrations this week"
+          message="When you check in and out, your days will appear here."
+        />
+      )}
+
+      {jornadas.map((jornada) => (
+        <Card key={jornada.dia} style={styles.day}>
+          <View style={styles.dayHeader}>
+            <Text style={font.heading}>{moment(jornada.dia, FORMATO).format('dddd, D MMM')}</Text>
+            {jornada.horas !== null ? (
+              <Badge label={formatearHoras(jornada.horas)} tone="success" />
+            ) : (
+              <Badge label="Incomplete" tone="warning" />
+            )}
+          </View>
+          <View style={styles.times}>
+            <View style={styles.time}>
+              <Ionicons name="log-in-outline" size={20} color={colors.success} />
+              <View>
+                <Text style={font.small}>Check-in</Text>
+                <Text style={font.heading}>{hora(jornada.entrada)}</Text>
+              </View>
             </View>
-          ))
-        )}
-      </ScrollView>
-    </Box>
+            <View style={styles.time}>
+              <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+              <View>
+                <Text style={font.small}>Check-out</Text>
+                <Text style={font.heading}>{hora(jornada.salida)}</Text>
+              </View>
+            </View>
+          </View>
+        </Card>
+      ))}
+    </Screen>
   );
 };
+
+const styles = StyleSheet.create({
+  content: { maxWidth: 560, width: '100%', alignSelf: 'center' },
+  weekBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  weekCenter: { alignItems: 'center', flex: 1 },
+  arrow: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowDisabled: { opacity: 0.35 },
+  total: { alignItems: 'center', gap: 2 },
+  totalValue: { fontSize: 32, fontWeight: '800', color: colors.primary },
+  day: { gap: spacing.md },
+  dayHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  times: { flexDirection: 'row', gap: spacing.xl },
+  time: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+});
 
 export default WeeklySummary;
