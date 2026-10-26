@@ -4,14 +4,30 @@ import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
-import { addTimeRegistrationService, summaryService } from '../services/searchWorker.service';
+import {
+  addTimeRegistrationService,
+  deleteWorkerService,
+  summaryService,
+} from '../services/searchWorker.service';
+import useUserStore from '../stores/useStore';
 import weeklySummaryService from '../services/weeklySummary.service';
 import { Marcaje, Resumen, Usuario } from '../services/types';
 import { agruparPorDia, diasSinSalida, formatearHoras } from '../lib/horarios';
 import { validarFechaHora } from '../lib/validation';
 import { useWorkers } from '../hooks/useWorkers';
 import { WorkerList } from '../components/WorkerList';
-import { Avatar, Badge, Button, EmptyState, Field, Notice, Screen, Sheet, StatTile } from '../components/ui';
+import {
+  Avatar,
+  Badge,
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  Field,
+  Notice,
+  Screen,
+  Sheet,
+  StatTile,
+} from '../components/ui';
 import { colors, font, spacing } from '../theme';
 
 type SearchWorkerProps = {
@@ -22,6 +38,10 @@ const FORMATO = 'DD-MM-YYYY';
 
 const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const workers = useWorkers();
+  const ownId = useUserStore((state) => state.id);
+  const [confirmando, setConfirmando] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+  const [aviso, setAviso] = useState<{ tono: 'success' | 'warning'; texto: string } | null>(null);
   const [timeRegistrations, setTimeRegistrations] = useState<Marcaje[]>([]);
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
@@ -47,6 +67,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
 
   const openUser = async (user: Usuario) => {
     setSelectedUser(user);
+    setAviso(null);
     setSheetError(null);
     setSheetInfo(null);
     setNewDate('');
@@ -79,6 +100,33 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     }
   };
 
+  const onDeleteWorker = async () => {
+    if (!selectedUser) {
+      return;
+    }
+    setEliminando(true);
+    const response = await deleteWorkerService(selectedUser.id);
+    setEliminando(false);
+    setConfirmando(false);
+    if (!response.success) {
+      setSheetError(response.message);
+      return;
+    }
+    setSheetVisible(false);
+    setAviso(
+      response.data.registrationsRemoved
+        ? {
+            tono: 'success',
+            texto: `${selectedUser.firstName} ${selectedUser.lastName} was deleted.`,
+          }
+        : {
+            tono: 'warning',
+            texto: 'The worker was deleted, but their time registrations could not be removed.',
+          },
+    );
+    workers.reload();
+  };
+
   const goEdit = (registration: Marcaje) => {
     setSheetVisible(false);
     navigation.navigate('EditTimeRegistration', {
@@ -95,6 +143,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
 
   return (
     <Screen style={styles.content}>
+      {aviso && <Notice tone={aviso.tono}>{aviso.texto}</Notice>}
       <WorkerList workers={workers} onSelect={openUser} />
 
       <Sheet
@@ -169,8 +218,27 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
             onChangeText={setNewDate}
           />
           <Button title="Add registration" icon="add" onPress={handleAddTimeRegistration} />
+
+          {selectedUser && selectedUser.id !== ownId && (
+            <Button
+              title="Delete worker"
+              variant="outline"
+              icon="trash-outline"
+              onPress={() => setConfirmando(true)}
+            />
+          )}
         </View>
       </Sheet>
+
+      <ConfirmDialog
+        visible={confirmando}
+        title="Delete this worker?"
+        message="Their account and all their time registrations will be removed. This cannot be undone."
+        confirmLabel="Delete worker"
+        loading={eliminando}
+        onConfirm={onDeleteWorker}
+        onCancel={() => setConfirmando(false)}
+      />
     </Screen>
   );
 };
