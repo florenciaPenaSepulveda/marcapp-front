@@ -262,6 +262,56 @@ export const Dialog = ({
   </Modal>
 );
 
+export const ConfirmDialog = ({
+  visible,
+  title,
+  message,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+  loading = false,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+}) => (
+  <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <View style={styles.overlay}>
+      <View style={styles.dialog} accessibilityViewIsModal>
+        <Ionicons name="warning" size={34} color={colors.danger} />
+        <Text style={[font.heading, styles.center]}>{title}</Text>
+        <Text style={[font.body, styles.center]}>{message}</Text>
+        <Button title={confirmLabel} variant="danger" onPress={onConfirm} loading={loading} style={styles.fullWidth} />
+        <Button title="Cancel" variant="ghost" onPress={onCancel} style={styles.fullWidth} />
+      </View>
+    </View>
+  </Modal>
+);
+
+export const StatTile = ({
+  label,
+  value,
+  icon,
+  tone = 'info',
+}: {
+  label: string;
+  value: string;
+  icon: IconName;
+  tone?: Tono;
+}) => (
+  <View style={styles.statTile} accessibilityLabel={`${label}: ${value}`}>
+    <View style={[styles.statIcon, { backgroundColor: tonos[tone].fondo }]}>
+      <Ionicons name={icon} size={20} color={tonos[tone].texto} />
+    </View>
+    <Text style={styles.statValue}>{value}</Text>
+    <Text style={font.small}>{label}</Text>
+  </View>
+);
+
 export const Sheet = ({
   visible,
   title,
@@ -423,6 +473,25 @@ const styles = StyleSheet.create({
   },
   sheetHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   sectionTitle: { ...font.heading, marginTop: spacing.sm },
+  statTile: {
+    flexGrow: 1,
+    flexBasis: '30%',
+    minWidth: 96,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: 2,
+    ...shadow,
+  },
+  statIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  statValue: { fontSize: 22, fontWeight: '800', color: colors.text },
   chart: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 190, paddingTop: spacing.sm },
   chartColumn: { flex: 1, height: '100%', alignItems: 'center', gap: 4 },
   chartTrack: { flex: 1, width: '100%', justifyContent: 'flex-end' },
