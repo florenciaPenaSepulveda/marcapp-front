@@ -1,63 +1,61 @@
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
-    description: {
-      fontSize: 20,
-      justifyContent: 'flex-start',
-      fontWeight: '600',
-      marginVertical: '10%',
-      paddingHorizontal: '0%',
-      color: 'gray',
-    },
-    container: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      backgroundColor: 'white',
-      paddingHorizontal: '0%',
-      paddingVertical: '0%',
-    },
-    buttonsContainer: {
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-    },
-    button: {
-      height: 120, // Ajusta la altura del botón aquí
-      width: 150, // Ajusta el ancho del botón aquí
-    },
-    checkInButton: {
-      backgroundColor: 'green', // Color del botón de Check-in
-    },
-    checkOutButton: {
-      backgroundColor: 'red', // Color del botón de Check-out
-    },
-    buttonContainer: {
-      position: 'absolute',
-    },
-    buttonTitle: {
-      fontSize: 19, // Tamaño de la fuente del texto del botón
-      fontWeight: 'bold', // Peso de la fuente del texto del botón
-      color: 'white', // Color del texto del botón
-    },
-    registrationInfo: {
-      fontSize: 20,
-      justifyContent: 'flex-start',
-      fontWeight: '600',
-      marginVertical: '100%',
-      paddingHorizontal: '0%',
-      color: 'gray',
-    },
-    checkInMessage: {
-      color: 'green', // Color del mensaje de Check-in
-      fontWeight: 'bold',
-      marginTop: 1000,
-    },
-    checkOutMessage: {
-      color: 'red', // Color del mensaje de Check-out
-      fontWeight: 'bold',
-      marginTop: 100,
-    },
+  description: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginVertical: 24,
+    color: 'gray',
+    textAlign: 'center',
+  },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  button: {
+    height: 120,
+    width: 150,
+  },
+  checkInButton: {
+    backgroundColor: 'green',
+  },
+  checkOutButton: {
+    backgroundColor: 'red',
+  },
+  buttonTitle: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+  },
+  errorMessage: {
+    color: '#C92A2A',
+    textAlign: 'center',
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  registrationInfo: {
+    marginTop: 24,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  checkInMessage: {
+    color: 'green',
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
+  checkOutMessage: {
+    color: 'red',
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
 });
 
 export default styles;

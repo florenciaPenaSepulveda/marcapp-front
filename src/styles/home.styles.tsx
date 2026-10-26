@@ -1,37 +1,42 @@
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
-    background: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      backgroundColor: 'white',
-      paddingHorizontal: '0%',
-      paddingVertical: '5%',
-    },
-    description: {
-      fontSize: 24,
-      textAlign: 'center',
-      fontWeight: '700',
-      marginVertical: '10%',
-    },
-    buttonsContainer: {
-      position: 'absolute',
-      width: '100%',
-      height: '100%',
-    },
-    button: {
-      height: 120, // Ajusta la altura del botón aquí
-      width: 150, // Ajusta el ancho del botón aquí
-    },
-    buttonContainer: {
-      position: 'absolute',
-    },
-    buttonTitle: {
-      fontSize: 19, // Tamaño de la fuente del texto del botón
-      fontWeight: 'bold', // Peso de la fuente del texto del botón
-      color: 'white', // Color del texto del botón
-    },
+  background: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingVertical: 24,
+  },
+  description: {
+    fontSize: 24,
+    textAlign: 'center',
+    fontWeight: '700',
+    marginVertical: 32,
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  button: {
+    height: 120,
+    width: 150,
+  },
+  buttonContainer: {
+    margin: 4,
+  },
+  buttonTitle: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+  },
+  logout: {
+    marginTop: 'auto',
+    width: 200,
+  },
 });
 
 export default styles;

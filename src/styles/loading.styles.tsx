@@ -1,12 +1,19 @@
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
-    container: {
-      paddingVertical: '5%',
-      textAlign: 'center',
-      fontSize: 24,
-      fontWeight: '700',
-    },
+  screen: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'white',
+  },
+  content: {
+    paddingHorizontal: '5%',
+  },
+  container: {
+    textAlign: 'center',
+    fontSize: 18,
+    marginVertical: 16,
+  },
 });
 
 export default styles;

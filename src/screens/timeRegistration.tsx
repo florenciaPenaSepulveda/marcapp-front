@@ -1,151 +1,134 @@
-import { useState, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Header, Text } from 'react-native-elements';
-import 'text-encoding-polyfill';
 import useUserStore from '../stores/useStore';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import timeRegistrationService from '../services/timeRegistration.service';
-import getRegistrationStateService from '../services/getRegistrationStateService.service';
+import getRegistrationStateService, {
+  EstadoDelDia,
+} from '../services/getRegistrationStateService.service';
+import { Marcaje } from '../services/types';
 import styles from '../styles/timeRegistration.styles';
 
-interface MarcajeDto {
-  id: number;
-  id_user: number;
-  date: string;
-  type: string;
-}
+const TITULOS: Record<EstadoDelDia, string> = {
+  0: 'Register Check-in time',
+  1: 'Register Check-out time',
+  2: 'Registration Completed',
+};
 
 const TimeRegistration = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const userStore = useUserStore();
-  const { email, firstName, id: userId } = userStore; // Asegúrate de tener el userId en el store
-  const [timeRegistration, setTimeRegistration] = useState<MarcajeDto | null>(null);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const firstName = useUserStore((state) => state.firstName);
+  const userId = useUserStore((state) => state.id);
+  const [timeRegistration, setTimeRegistration] = useState<Marcaje | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [registrationState, setRegistrationState] = useState<number>(2);
+  const [registrationState, setRegistrationState] =
+    useState<EstadoDelDia | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  // Function to fetch the current registration state
-  const fetchRegistrationState = async () => {
-    try {
-      const response = await getRegistrationStateService(userId);
-      if (response?.success) {
-        console.log('Cantidad de registros:', response.data);
-        setRegistrationState(response.data);
-      } else {
-        console.error('Failed to fetch registration state:', response?.message);
-      }
-    } catch (error) {
-      console.log('An error occurred while fetching the registration state');
+  const fetchRegistrationState = useCallback(async () => {
+    setErrorMessage('');
+    const response = await getRegistrationStateService(userId);
+    if (response.success) {
+      setRegistrationState(response.data);
+    } else {
+      setErrorMessage(response.message);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
-    // Fetch the initial registration state when the component mounts
     fetchRegistrationState();
-  }, []);
+  }, [fetchRegistrationState]);
 
   const handleRegistration = async () => {
-    try {
-      setLoading(true);
-      const response = await timeRegistrationService();
-      if (response?.success) {
-        console.log('Successful response:', response.data);
-        setTimeRegistration(response.data as MarcajeDto);
-        setLoading(false);
-
-        // Update the state based on the current registration state
-        if (registrationState === 0) {
-          setRegistrationState(1);
-        } else if (registrationState === 1) {
-          setRegistrationState(2);
-        }
-      } else {
-        console.error('Failed response:', response?.message);
-        setLoading(false);
-      }
-    } catch (error) {
-      console.log('An error occurred');
-      setLoading(false);
-    }
-  };
-
-  const goSummary = () => {
-    navigation.navigate('WeeklySummary');
-  };
-
-  const getButtonTitle = () => {
-    if (registrationState === 0) {
-      return 'Register Check-in time';
-    } else if (registrationState === 1) {
-      return 'Register Check-out time';
+    setLoading(true);
+    setErrorMessage('');
+    const response = await timeRegistrationService();
+    setLoading(false);
+    if (response.success) {
+      setTimeRegistration(response.data);
+      setRegistrationState(response.data.type === 'entry' ? 1 : 2);
     } else {
-      return 'Registration Completed';
+      setErrorMessage(response.message);
     }
   };
 
-  const getButtonStyle = () => {
-    if (registrationState === 0) {
-      return [styles.button, styles.checkInButton];
-    } else if (registrationState === 1) {
-      return [styles.button, styles.checkOutButton];
-    } else {
-      return styles.button;
-    }
-  };
+  const completo = registrationState === 2;
 
   return (
     <Box style={styles.container}>
       <Header
         centerComponent={{
           text: 'Time Registration',
-          style: {
-            color: '#fff',
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
+          style: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
         }}
         containerStyle={{
           backgroundColor: '#0AA5F2',
           justifyContent: 'space-around',
         }}
       />
-      <Text
-        style={styles.description}
-      >
+      <Text style={styles.description}>
         Please select what would you like to do
       </Text>
       <View style={styles.buttonsContainer}>
+        {registrationState === null ? (
+          errorMessage ? (
+            <Button
+              title="Try again"
+              onPress={fetchRegistrationState}
+              buttonStyle={styles.button}
+              titleStyle={styles.buttonTitle}
+            />
+          ) : (
+            <Text>Loading...</Text>
+          )
+        ) : (
+          <Button
+            title={TITULOS[registrationState]}
+            onPress={handleRegistration}
+            loading={loading}
+            buttonStyle={[
+              styles.button,
+              registrationState === 0 && styles.checkInButton,
+              registrationState === 1 && styles.checkOutButton,
+            ]}
+            titleStyle={styles.buttonTitle}
+            disabled={completo}
+          />
+        )}
         <Button
-          title={getButtonTitle()}
-          onPress={handleRegistration}
-          loading={loading}
-          buttonStyle={getButtonStyle()}
-          containerStyle={[styles.buttonContainer, { top: 20, left: 150 }]}
-          titleStyle={styles.buttonTitle}
-          disabled={registrationState === 2}
-        />
-        <Button
-          title='My Weekly Summary'
-          onPress={goSummary}
+          title="My Weekly Summary"
+          onPress={() => navigation.navigate('WeeklySummary')}
           buttonStyle={styles.button}
-          containerStyle={[styles.buttonContainer, { top: 220, left: 150 }]}
           titleStyle={styles.buttonTitle}
         />
       </View>
 
+      {errorMessage !== '' && (
+        <Text style={styles.errorMessage} accessibilityRole="alert">
+          {errorMessage}
+        </Text>
+      )}
+
       {timeRegistration && (
         <View style={styles.registrationInfo}>
           <Text>
-            {firstName}, your {timeRegistration.type} has been registered at {timeRegistration.date}
+            {firstName}, your {timeRegistration.type} has been registered at{' '}
+            {timeRegistration.date}
           </Text>
           <Text>Registration ID: {timeRegistration.id}</Text>
-          {timeRegistration.type === 'entry' && (
-            <Text style={styles.checkInMessage}>You have successfully checked in!</Text>
-          )}
-          {timeRegistration.type === 'exit' && (
-            <Text style={styles.checkOutMessage}>You have successfully checked out!</Text>
+          {timeRegistration.type === 'entry' ? (
+            <Text style={styles.checkInMessage}>
+              You have successfully checked in!
+            </Text>
+          ) : (
+            <Text style={styles.checkOutMessage}>
+              You have successfully checked out!
+            </Text>
           )}
         </View>
       )}

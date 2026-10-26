@@ -39,6 +39,11 @@ const styles = StyleSheet.create({
     buttonContainer: {
       position: 'relative',
     },
+    viewButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      marginTop: 16,
+    },
     buttonText: {
       color: 'white',
       fontWeight: 'bold',

@@ -1,98 +1,49 @@
-import React, { useEffect, useState } from 'react';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { Box } from 'native-base';
 import { Button, Text } from 'react-native-elements';
-import 'text-encoding-polyfill';
 import useUserStore from '../stores/useStore';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
+import { cerrarSesion } from '../session';
 import styles from '../styles/home.styles';
+
+type Destino = 'Profile' | 'TimeRegistration' | 'SearchWorker' | 'ViewGraphics';
 
 const Home = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { firstName, role, setFirstName, setLastName } = useUserStore((state) => ({
-    firstName: state.firstName,
-    role: state.role,
-    setFirstName: state.setFirstName,
-    setLastName: state.setLastName,
-  }));
+  const firstName = useUserStore((state) => state.firstName);
+  const role = useUserStore((state) => state.role);
 
-  const goProfile = () => {
-    navigation.navigate("Profile");
-  }
-
-  const goTimeRegistration = () => {
-    console.log('Go Time Registration');
-    navigation.navigate("TimeRegistration");
-  }
-
-  const goSearchWorker = () => {
-    console.log('Go Search Worker');
-    navigation.navigate("SearchWorker");
-  }
-
-  const goViewGraphics = () => {
-    console.log('Go View Graphics');
-    navigation.navigate("ViewGraphics");
-  }
-
-  const [loading, setLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    // Cualquier lógica que necesites para cuando se actualiza el estado
-  }, [firstName, role]);
+  const opcion = (titulo: string, destino: Destino) => (
+    <Button
+      key={destino}
+      title={titulo}
+      onPress={() => navigation.navigate(destino)}
+      buttonStyle={styles.button}
+      containerStyle={styles.buttonContainer}
+      titleStyle={styles.buttonTitle}
+    />
+  );
 
   return (
-    <Box
-      style={styles.background}
-    >
-      <Text
-        style={styles.description}
-      >
+    <Box style={styles.background}>
+      <Text style={styles.description}>
         Nice to see you again on MarcApp, {firstName}!
       </Text>
       <View style={styles.buttonsContainer}>
-        <Button
-          title="View Profile"
-          onPress={goProfile}
-          loading={loading}
-          buttonStyle={styles.button}
-          containerStyle={[styles.buttonContainer, { top: 150, left: 50 }]}
-          titleStyle={styles.buttonTitle}
-        />
-
-        <Button 
-          title="Add Time Registration"
-          onPress={goTimeRegistration}
-          loading={loading}
-          buttonStyle={styles.button}
-          containerStyle={[styles.buttonContainer, { top: 150, right: 50 }]}
-          titleStyle={styles.buttonTitle}
-        />
-
-        {role === 'admin' && (
-          <>
-            <Button 
-              title="Search worker" 
-              onPress={goSearchWorker} 
-              loading={loading}
-              buttonStyle={styles.button}
-              containerStyle={[styles.buttonContainer, { top: 300, left: 50 }]}
-              titleStyle={styles.buttonTitle}
-            />
-            <Button 
-              title="View Graphics" 
-              onPress={goViewGraphics} 
-              loading={loading}
-              buttonStyle={styles.button}
-              containerStyle={[styles.buttonContainer, { top: 300, right: 50 }]}
-              titleStyle={styles.buttonTitle}
-            />
-          </>
-        )}
+        {opcion('View Profile', 'Profile')}
+        {opcion('Add Time Registration', 'TimeRegistration')}
+        {role === 'admin' && opcion('Search worker', 'SearchWorker')}
+        {role === 'admin' && opcion('View Graphics', 'ViewGraphics')}
       </View>
+      <Button
+        title="Log out"
+        type="outline"
+        onPress={cerrarSesion}
+        containerStyle={styles.logout}
+      />
     </Box>
   );
 };

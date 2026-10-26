@@ -1,11 +1,26 @@
 import React, { useState } from 'react';
 import { Text, ListItem, Button, Header } from 'react-native-elements';
-import { searchWorkerService, addTimeRegistrationService } from '../services/searchWorker.service';
-import { View, StyleSheet, TextInput, FlatList, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TouchableHighlight } from 'react-native';
+import {
+  searchWorkerService,
+  addTimeRegistrationService,
+} from '../services/searchWorker.service';
+import {
+  View,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Modal,
+  TouchableHighlight,
+} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import moment from 'moment';
 import weeklySummaryService from '../services/weeklySummary.service';
+import { Marcaje, Usuario } from '../services/types';
+import { colorDeAvatar, inicial } from '../lib/avatar';
+import { validarFechaHora } from '../lib/validation';
 import { Box } from 'native-base';
 import styles from '../styles/searchWorker.styles';
 
@@ -13,21 +28,22 @@ type SearchWorkerProps = {
   navigation: NativeStackNavigationProp<RootStackParamList>;
 };
 
-interface TimeRegistration {
-  date: string;
-  id: number;
-  id_user: number;
-  type: string;
-  latCoordinate: string;
-  longCoordinate: string;
-  adminFlag: boolean;
-}
+const FORMATO = 'DD-MM-YYYY';
+
+const findMissingExits = (registrations: Marcaje[]): string[] => {
+  const pendientes: Record<string, boolean> = {};
+  registrations.forEach((reg) => {
+    const dia = reg.date.split(' ')[0];
+    pendientes[dia] = reg.type === 'entry' ? pendientes[dia] !== false : false;
+  });
+  return Object.keys(pendientes).filter((dia) => pendientes[dia]);
+};
 
 const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [timeRegistrations, setTimeRegistrations] = useState<TimeRegistration[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<Usuario[]>([]);
+  const [timeRegistrations, setTimeRegistrations] = useState<Marcaje[]>([]);
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [newDate, setNewDate] = useState('');
@@ -36,166 +52,121 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
   const handleSearch = async () => {
     setLoading(true);
     setErrorMessage(null);
-    try {
-      const results = await searchWorkerService(searchTerm);
-      setLoading(false);
-      if (results?.success) {
-        const filteredResults = results.data.filter((user: any) =>
-          user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setSearchResults(filteredResults);
-        if (filteredResults.length === 0) {
-          setErrorMessage('There are no results.');
-        }
-      } else {
-        setErrorMessage(results.message || 'Search error.');
+    const results = await searchWorkerService(searchTerm);
+    setLoading(false);
+    if (results.success) {
+      setSearchResults(results.data);
+      if (results.data.length === 0) {
+        setErrorMessage('There are no results.');
       }
-    } catch (error) {
-      setLoading(false);
-      setErrorMessage('Search error.');
-      console.error('Error en la búsqueda:', error);
+    } else {
+      setSearchResults([]);
+      setErrorMessage(results.message);
     }
   };
 
   const obtainTimeRegistration = async (idUser: number) => {
-    const currentWeek = moment().startOf('isoWeek');
-    const initWeek = currentWeek.startOf('isoWeek').format("DD-MM-YYYY");
-    const endWeek = currentWeek.endOf('isoWeek').format("DD-MM-YYYY");
-
-    try {
-      const response = await weeklySummaryService(initWeek, endWeek, idUser);
-      if (response?.success && response.data) {
-        setTimeRegistrations(response.data);
-        setSelectedUser(idUser);
-        setModalVisible(true);
-      } else {
-        console.log(response?.message);
-        setTimeRegistrations([]);
-      }
-    } catch (error) {
-      console.error('Error obteniendo registros de tiempo:', error);
+    const semana = moment().startOf('isoWeek');
+    const response = await weeklySummaryService(
+      semana.format(FORMATO),
+      semana.clone().endOf('isoWeek').format(FORMATO),
+      idUser,
+    );
+    setSelectedUser(idUser);
+    if (response.success) {
+      setTimeRegistrations(response.data);
+      setModalVisible(true);
+    } else {
       setTimeRegistrations([]);
+      setErrorMessage(response.message);
     }
   };
 
   const handleAddTimeRegistration = async () => {
-    
-    if (!newDate) {
-      setErrorMessage('Please, complete all the fields.');
+    if (selectedUser === null) {
+      setErrorMessage('Select a worker first.');
       return;
     }
-
-    if (!moment(newDate, 'DD-MM-YYYY HH:mm:ss', true).isValid()) {
-      setErrorMessage(`Invalid date format: ${newDate}`);
+    const error = validarFechaHora(newDate);
+    if (error) {
+      setErrorMessage(error);
       return;
     }
-
-    try {
-      const response = await addTimeRegistrationService(newDate, selectedUser);
-      
-      console.log("NUEVA FECHA:", newDate)
-      if (response?.success) {
-        setErrorMessage('Time Registration successfully added');
-        setNewDate('');
-        obtainTimeRegistration(selectedUser);
-      } else {
-        setErrorMessage(response.message || 'Error al agregar el marcaje.');
-      }
-    } catch (error) {
-      console.error('Error al agregar el marcaje:', error);
-      setErrorMessage('Error al agregar el marcaje.');
+    const response = await addTimeRegistrationService(newDate, selectedUser);
+    if (response.success) {
+      setErrorMessage('Time Registration successfully added');
+      setNewDate('');
+      obtainTimeRegistration(selectedUser);
+    } else {
+      setErrorMessage(response.message);
     }
   };
 
-  const findMissingExits = (registrations: TimeRegistration[]) => {
-    const entriesWithoutExits: { [key: string]: boolean } = {};
-
-    registrations.forEach((reg) => {
-      const date = reg.date.split(' ')[0];
-      if (reg.type === 'entry') {
-        if (!entriesWithoutExits[date]) {
-          entriesWithoutExits[date] = true;
-        }
-      } else if (reg.type === 'exit') {
-        entriesWithoutExits[date] = false;
-      }
-    });
-
-    return Object.keys(entriesWithoutExits).filter((date) => entriesWithoutExits[date]);
-  };
-
-  const generateRandomColor = () => {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-  };
-
-  const renderProfilePicture = (name: string) => {
-    const initial = name.charAt(0).toUpperCase();
-    const backgroundColor = generateRandomColor();
-    return (
-      <View style={[styles.profilePicture, { backgroundColor }]}>
-        <Text style={styles.initial}>{initial}</Text>
-      </View>
-    );
-  };
-
-  const goEditTimeRegistration = (registration: TimeRegistration) => {
+  const goEditTimeRegistration = (registration: Marcaje) => {
     setModalVisible(false);
-    navigation.navigate("EditTimeRegistration", {
+    navigation.navigate('EditTimeRegistration', {
       id: registration.id.toString(),
       date: registration.date,
-      type: registration.type
+      type: registration.type,
     });
   };
+
+  const sinSalida = findMissingExits(timeRegistrations);
 
   return (
     <Box style={styles.container}>
       <Header
         centerComponent={{
           text: 'Search worker',
-          style: {
-            color: '#fff',
-            fontWeight: 'bold',
-            fontSize: 20,
-          },
+          style: { color: '#fff', fontWeight: 'bold', fontSize: 20 },
         }}
         containerStyle={{
           backgroundColor: '#0AA5F2',
           justifyContent: 'space-around',
         }}
       />
-      <Text style={styles.subtitle}>Please type the worker's name you want to search</Text>
+      <Text style={styles.subtitle}>
+        Please type the worker's name you want to search
+      </Text>
       <View style={styles.container}>
         <TextInput
           style={styles.input}
           placeholder="Search employee"
-          onChangeText={(text) => setSearchTerm(text)}
+          onChangeText={setSearchTerm}
+          onSubmitEditing={handleSearch}
           value={searchTerm}
+          returnKeyType="search"
         />
-        
-        <Button title="Search" onPress={handleSearch} buttonStyle={styles.button}/>
-        
+
+        <Button title="Search" onPress={handleSearch} buttonStyle={styles.button} />
+
         {loading && <ActivityIndicator size="large" color="#4287f5" />}
-        
+
         {errorMessage && <Text style={styles.errorMessage}>{errorMessage}</Text>}
-        
+
         <FlatList
           data={searchResults}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <ListItem onPress={() => obtainTimeRegistration(item.id)}>
-              {renderProfilePicture(item.firstName)}
+              <View
+                style={[
+                  styles.profilePicture,
+                  { backgroundColor: colorDeAvatar(item.firstName) },
+                ]}
+              >
+                <Text style={styles.initial}>{inicial(item.firstName)}</Text>
+              </View>
               <View style={styles.userInfo}>
                 <ListItem.Content>
-                  <ListItem.Title>{item.firstName} {item.lastName}</ListItem.Title>
+                  <ListItem.Title>
+                    {item.firstName} {item.lastName}
+                  </ListItem.Title>
                   <ListItem.Subtitle>E-mail: {item.email}</ListItem.Subtitle>
                   <ListItem.Subtitle>User ID: {item.id}</ListItem.Subtitle>
-                  <ListItem.Subtitle>Birthday: {item.birthday.split('T')[0]}</ListItem.Subtitle>
+                  <ListItem.Subtitle>
+                    Birthday: {item.birthday.split('T')[0]}
+                  </ListItem.Subtitle>
                 </ListItem.Content>
               </View>
             </ListItem>
@@ -205,42 +176,56 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           animationType="slide"
           transparent={true}
           visible={modalVisible}
-          onRequestClose={() => {
-            setModalVisible(!modalVisible);
-          }}
+          onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalBackground}>
             <View style={styles.modalContent}>
               <TouchableHighlight
                 style={styles.closeButton}
-                onPress={() => {
-                  setModalVisible(!modalVisible);
-                }}
+                onPress={() => setModalVisible(false)}
+                accessibilityLabel="Close"
               >
                 <Text style={styles.closeButtonText}>x</Text>
               </TouchableHighlight>
-              <Text style={styles.sectionTitle}>Time registrations for User N° {selectedUser} in this week:</Text>
+              <Text style={styles.sectionTitle}>
+                Time registrations for User N° {selectedUser} in this week:
+              </Text>
               {timeRegistrations.length === 0 ? (
-                <Text style={styles.noRegistrationsText}>There are no registrations in this period</Text>
+                <Text style={styles.noRegistrationsText}>
+                  There are no registrations in this period
+                </Text>
               ) : (
                 <ScrollView style={styles.scrollContainer}>
                   {timeRegistrations.map((registration, index) => (
-                    <TouchableOpacity 
-                      key={index} 
-                      style={styles.registrationInfo} 
+                    <TouchableOpacity
+                      key={registration.id}
+                      style={styles.registrationInfo}
                       onPress={() => goEditTimeRegistration(registration)}
                     >
-                      <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
+                      <Text
+                        style={
+                          registration.type === 'entry'
+                            ? styles.entryText
+                            : styles.exitText
+                        }
+                      >
                         {registration.type.toUpperCase()}
                       </Text>
-                      <Text>Registration {index + 1}: {registration.date}</Text>
+                      <Text>
+                        Registration {index + 1}: {registration.date}
+                      </Text>
                       <Text>Register ID: {registration.id}</Text>
                       {registration.latCoordinate && registration.longCoordinate ? (
-                        <Text>Location: {registration.latCoordinate}, {registration.longCoordinate}</Text>
+                        <Text>
+                          Location: {registration.latCoordinate},{' '}
+                          {registration.longCoordinate}
+                        </Text>
                       ) : (
                         <Text style={styles.noLocation}>Location not available</Text>
                       )}
-                      <Text>Modified by administrator: {registration.adminFlag ? 'Yes' : 'No'}</Text>
+                      <Text>
+                        Modified by administrator: {registration.adminFlag ? 'Yes' : 'No'}
+                      </Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -249,21 +234,31 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
           </View>
         </Modal>
 
-        {findMissingExits(timeRegistrations).length > 0 && (
+        {sinSalida.length > 0 && (
           <Text style={styles.warningMessage}>
-            The following days have entries with no registered exit: {findMissingExits(timeRegistrations).join(', ')}
+            The following days have entries with no registered exit:{' '}
+            {sinSalida.join(', ')}
           </Text>
         )}
-        <View style={styles.formContainer}>
-          <Text style={styles.sectionTitle}>Add time registration</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Date (DD-MM-YYYY HH:mm:ss)"
-            onChangeText={(text) => setNewDate(text)}
-            value={newDate}
-          />
-          <Button title="Add Time Registration" onPress={handleAddTimeRegistration} buttonStyle={styles.button}/>
-        </View>
+        {selectedUser !== null && (
+          <View style={styles.formContainer}>
+            <Text style={styles.sectionTitle}>
+              Add time registration for User N° {selectedUser}
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Date (DD-MM-YYYY HH:mm:ss)"
+              onChangeText={setNewDate}
+              value={newDate}
+              autoCapitalize="none"
+            />
+            <Button
+              title="Add Time Registration"
+              onPress={handleAddTimeRegistration}
+              buttonStyle={styles.button}
+            />
+          </View>
+        )}
       </View>
     </Box>
   );

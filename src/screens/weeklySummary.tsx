@@ -1,71 +1,53 @@
-import { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { Box } from 'native-base';
-import { Button, Header, Text } from 'react-native-elements';
-import 'text-encoding-polyfill';
-import useUserStore from '../stores/useStore';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../Router';
+import { Header, Text } from 'react-native-elements';
 import moment from 'moment';
+import useUserStore from '../stores/useStore';
 import weeklySummaryService from '../services/weeklySummary.service';
+import { Marcaje } from '../services/types';
 import styles from '../styles/weeklySummary.styles';
 
-interface TimeRegistration {
-  date: string;
-  id: number;
-  id_user: number;
-  type: string;
-  latCoordinate: string
-  longCoordinate: string;
-}
+const FORMATO = 'DD-MM-YYYY';
+
+const formatDate = (date: moment.Moment) =>
+  date.year() !== moment().year()
+    ? date.format('DD MMMM YYYY')
+    : date.format('DD MMMM');
 
 const WeeklySummary = () => {
-  const userStore = useUserStore();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [timeRegistrations, setTimeRegistrations] = useState<TimeRegistration[]>([]);
+  const userId = useUserStore((state) => state.id);
+  const [timeRegistrations, setTimeRegistrations] = useState<Marcaje[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [currentWeek, setCurrentWeek] = useState(moment().startOf('isoWeek'));
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [currentWeek, setCurrentWeek] = useState(() =>
+    moment().startOf('isoWeek'),
+  );
+  const finDeSemana = currentWeek.clone().endOf('isoWeek');
 
-  const fetchWeeklyData = async () => {
-    try {
-      setLoading(true);
-      const initWeek = currentWeek.startOf('isoWeek').format("DD-MM-YYYY");
-      console.log('Inicio Semana', initWeek);
-      const endWeek = currentWeek.endOf('isoWeek').format("DD-MM-YYYY");
-      console.log('Fin semana', endWeek);
-      const response = await weeklySummaryService(initWeek, endWeek, userStore.id);
-      if (response?.success && response.data) {
-        setTimeRegistrations(response.data);
-      } else {
-        console.log(response?.message);
-        setTimeRegistrations([]); // Establecer un arreglo vacío en caso de error
-      }
-    } catch (error) {
-      console.log(error);
-      setTimeRegistrations([]); // Establecer un arreglo vacío en caso de error
-    } finally {
-      setLoading(false);
+  const fetchWeeklyData = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage('');
+    const response = await weeklySummaryService(
+      currentWeek.format(FORMATO),
+      currentWeek.clone().endOf('isoWeek').format(FORMATO),
+      userId,
+    );
+    if (response.success) {
+      setTimeRegistrations(response.data);
+    } else {
+      setTimeRegistrations([]);
+      setErrorMessage(response.message);
     }
-  };
+    setLoading(false);
+  }, [currentWeek, userId]);
 
   useEffect(() => {
     fetchWeeklyData();
-  }, [currentWeek]);
+  }, [fetchWeeklyData]);
 
-  const goToPreviousWeek = () => {
-    setCurrentWeek(currentWeek.clone().subtract(1, 'week').startOf('isoWeek'));
-  };
-
-  const goToNextWeek = () => {
-    setCurrentWeek(currentWeek.clone().add(1, 'week').startOf('isoWeek'));
-  };
-
-  const formatDate = (date: moment.Moment) => {
-    const currentYear = moment().year();
-    const dateYear = date.year();
-    return dateYear !== currentYear ? date.format('DD MMMM YYYY') : date.format('DD MMMM');
-  };
+  const cambiarSemana = (semanas: number) =>
+    setCurrentWeek((semana) => semana.clone().add(semanas, 'week'));
 
   return (
     <Box style={styles.container}>
@@ -81,36 +63,59 @@ const WeeklySummary = () => {
       />
       <View style={styles.navigationContainer}>
         <Text
-          onPress={goToPreviousWeek}
+          onPress={() => cambiarSemana(-1)}
           style={styles.navigateLeft}
+          accessibilityRole="button"
+          accessibilityLabel="Previous week"
         >
-          {"<"}
+          {'<'}
         </Text>
         <Text style={styles.weekText}>
-          {formatDate(currentWeek.startOf('isoWeek'))} - {formatDate(currentWeek.endOf('isoWeek'))}
+          {formatDate(currentWeek)} - {formatDate(finDeSemana)}
         </Text>
         <Text
-          onPress={goToNextWeek}
+          onPress={() => cambiarSemana(1)}
           style={styles.navigateRight}
+          accessibilityRole="button"
+          accessibilityLabel="Next week"
         >
-          {">"}
+          {'>'}
         </Text>
       </View>
+      {loading && <ActivityIndicator size="large" color="#0AA5F2" />}
+      {errorMessage !== '' && (
+        <Text style={styles.noRegistrationsText} accessibilityRole="alert">
+          {errorMessage}
+        </Text>
+      )}
       <ScrollView style={styles.scrollView}>
-        {timeRegistrations.length === 0 ? (
-          <Text style={styles.noRegistrationsText}>There are no registrations on this period</Text>
+        {!loading && !errorMessage && timeRegistrations.length === 0 ? (
+          <Text style={styles.noRegistrationsText}>
+            There are no registrations on this period
+          </Text>
         ) : (
           timeRegistrations.map((registration, index) => (
-            <View key={index} style={styles.registrationInfo}>
-              <Text style={registration.type === 'entry' ? styles.entryText : styles.exitText}>
+            <View key={registration.id} style={styles.registrationInfo}>
+              <Text
+                style={
+                  registration.type === 'entry'
+                    ? styles.entryText
+                    : styles.exitText
+                }
+              >
                 {registration.type.toUpperCase()}
               </Text>
-              <Text>Registration {index + 1}: {registration.date}</Text>
+              <Text>
+                Registration {index + 1}: {registration.date}
+              </Text>
               <Text>Registration ID: {registration.id}</Text>
               {registration.latCoordinate && registration.longCoordinate ? (
-                      <Text>Registration Location: {registration.latCoordinate}, {registration.longCoordinate}</Text>
-                    ) : (
-                      <Text style={styles.noLocation}>Location not available</Text>
+                <Text>
+                  Registration Location: {registration.latCoordinate},{' '}
+                  {registration.longCoordinate}
+                </Text>
+              ) : (
+                <Text style={styles.noLocation}>Location not available</Text>
               )}
             </View>
           ))
