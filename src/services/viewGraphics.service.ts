@@ -1,6 +1,7 @@
-import { marcajeApi, usersApi } from './http';
+import { marcajeApi } from './http';
+import { searchWorkerService } from './searchWorker.service';
 import { mensajeDeError } from '../lib/errors';
-import { exito, fallo, Resultado, Usuario } from './types';
+import { exito, fallo, Resultado } from './types';
 
 export type HorasMensuales = {
   id: number;
@@ -14,19 +15,6 @@ export type HorasDiarias = {
   idUser: number;
   day: string;
   dailyHoursWorked: number;
-};
-
-const viewGraphicsService = async (
-  searchTerm: string,
-): Promise<Resultado<Usuario[]>> => {
-  try {
-    const { data } = await usersApi.post<Usuario[]>('/users/all', {
-      searchTerm: searchTerm.trim() || undefined,
-    });
-    return exito(data);
-  } catch (error) {
-    return fallo(mensajeDeError(error, 'Error in employee search.'));
-  }
 };
 
 const getMonthlyAverageHours = async (
@@ -57,7 +45,7 @@ const getWeeklyAverageHours = async (
 };
 
 export default {
-  viewGraphicsService,
+  viewGraphicsService: searchWorkerService,
   getMonthlyAverageHours,
   getWeeklyAverageHours,
 };

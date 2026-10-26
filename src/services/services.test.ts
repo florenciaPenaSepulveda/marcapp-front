@@ -9,7 +9,15 @@ import editService from './editprofile.service';
 import timeRegistrationService from './timeRegistration.service';
 import getRegistrationStateService from './getRegistrationStateService.service';
 import weeklySummaryService from './weeklySummary.service';
-import { addTimeRegistrationService, searchWorkerService } from './searchWorker.service';
+import {
+  addTimeRegistrationService,
+  deleteTimeRegistrationService,
+  searchWorkerService,
+  summaryService,
+  teamStatusService,
+  userStatsService,
+} from './searchWorker.service';
+import changePasswordService from './password.service';
 import editTimeRegistrationService from './editTimeRegistration.service';
 import viewGraphicsService from './viewGraphics.service';
 import healthcheckService from './healthcheck.service';
@@ -204,14 +212,62 @@ describe('marcajes', () => {
 });
 
 describe('administración de usuarios y estadísticas', () => {
-  it('busca usuarios y omite el término vacío', async () => {
-    usuarios.onPost('/users/all').reply(201, [perfil]);
-    expect(await searchWorkerService('  ')).toEqual({ success: true, data: [perfil] });
-    expect(JSON.parse(usuarios.history.post[0].data ?? '{}')).toEqual({});
-    await searchWorkerService(' ana ');
-    expect(JSON.parse(usuarios.history.post[1].data)).toEqual({ searchTerm: 'ana' });
-    usuarios.onPost('/users/all').reply(403);
+  const pagina = { items: [perfil], total: 41, limit: 20, offset: 0 };
+
+  it('lista trabajadores con paginación y omite el término vacío', async () => {
+    usuarios.onGet('/users').reply(200, pagina);
+    expect(await searchWorkerService('  ')).toEqual({ success: true, data: pagina });
+    expect(usuarios.history.get[0].params).toEqual({ search: undefined, limit: 20, offset: 0 });
+    await searchWorkerService(' ana ', 20);
+    expect(usuarios.history.get[1].params).toEqual({ search: 'ana', limit: 20, offset: 20 });
+    usuarios.onGet('/users').reply(403);
     expect((await searchWorkerService('x')).success).toBe(false);
+  });
+
+  it('consulta el estado de hoy del equipo y los totales de usuarios', async () => {
+    const estado = [{ idUser: 7, state: 'working', checkIn: '11-03-2024 09:00:00', checkOut: null }];
+    marcajes.onGet('/marcaje/admin/today').reply(200, estado);
+    expect(await teamStatusService()).toEqual({ success: true, data: estado });
+    marcajes.onGet('/marcaje/admin/today').reply(403);
+    expect((await teamStatusService()).success).toBe(false);
+
+    const totales = { total: 10, admins: 2, workers: 8, newThisMonth: 1 };
+    usuarios.onGet('/users/stats').reply(200, totales);
+    expect(await userStatsService()).toEqual({ success: true, data: totales });
+    usuarios.onGet('/users/stats').networkError();
+    expect((await userStatsService()).success).toBe(false);
+  });
+
+  it('pide el resumen de horas con el trabajador y el período opcionales', async () => {
+    const resumen = { from: '2024-03-01', to: '2024-03-31', daysWorked: 2, totalHours: 16, averageHoursPerDay: 8, incompleteDays: 0, perUser: [] };
+    marcajes.onGet('/statistics/summary').reply(200, resumen);
+    expect(await summaryService(7, '01-03-2024', '31-03-2024')).toEqual({ success: true, data: resumen });
+    expect(marcajes.history.get[0].params).toEqual({ userId: 7, from: '01-03-2024', to: '31-03-2024' });
+    marcajes.onGet('/statistics/summary').reply(400, { message: 'Dates must use the format DD-MM-YYYY' });
+    expect(await summaryService()).toEqual({ success: false, message: 'Dates must use the format DD-MM-YYYY' });
+  });
+
+  it('elimina un marcaje', async () => {
+    marcajes.onDelete('/marcaje/admin/4').reply(200, { success: true });
+    expect(await deleteTimeRegistrationService(4)).toEqual({ success: true, data: undefined });
+    marcajes.onDelete('/marcaje/admin/4').reply(404);
+    expect((await deleteTimeRegistrationService(4)).success).toBe(false);
+  });
+
+  it('cambia la contraseña enviando la actual y la nueva', async () => {
+    usuarios.onPatch('/users/password').reply(200, { message: 'Password updated' });
+    expect((await changePasswordService('Actual12345', 'Nueva12345')).success).toBe(true);
+    expect(JSON.parse(usuarios.history.patch[0].data)).toEqual({
+      currentPassword: 'Actual12345',
+      newPassword: 'Nueva12345',
+    });
+    useTokenStore.setState({ token: 'sesion-activa' });
+    usuarios.onPatch('/users/password').reply(400, { message: 'Current password is incorrect' });
+    expect(await changePasswordService('x', 'Nueva12345')).toEqual({
+      success: false,
+      message: 'Current password is incorrect',
+    });
+    expect(cerrarSesion).not.toHaveBeenCalled();
   });
 
   it('pide las estadísticas filtradas por usuario', async () => {
@@ -225,13 +281,6 @@ describe('administración de usuarios y estadísticas', () => {
     marcajes.onGet('/statistics/daily').reply(500);
     expect((await viewGraphicsService.getMonthlyAverageHours(7)).success).toBe(false);
     expect((await viewGraphicsService.getWeeklyAverageHours(7)).success).toBe(false);
-  });
-
-  it('el buscador de gráficos usa el mismo endpoint de usuarios', async () => {
-    usuarios.onPost('/users/all').reply(201, [perfil]);
-    expect((await viewGraphicsService.viewGraphicsService('ana')).success).toBe(true);
-    usuarios.onPost('/users/all').reply(500);
-    expect((await viewGraphicsService.viewGraphicsService('ana')).success).toBe(false);
   });
 });
 

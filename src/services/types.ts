@@ -28,3 +28,42 @@ export const fallo = (message: string): Resultado<never> => ({
   success: false,
   message,
 });
+
+export type Pagina<T> = {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type EstadoDeHoy = {
+  idUser: number;
+  state: 'working' | 'done';
+  checkIn: string | null;
+  checkOut: string | null;
+};
+
+export type ResumenDeHoras = {
+  idUser: number;
+  daysWorked: number;
+  totalHours: number;
+  averageHoursPerDay: number;
+  incompleteDays: number;
+};
+
+export type Resumen = {
+  from: string;
+  to: string;
+  daysWorked: number;
+  totalHours: number;
+  averageHoursPerDay: number;
+  incompleteDays: number;
+  perUser: ResumenDeHoras[];
+};
+
+export type EstadisticasDeUsuarios = {
+  total: number;
+  admins: number;
+  workers: number;
+  newThisMonth: number;
+};
