@@ -2,6 +2,15 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const SIN_USUARIO = {
+  id: 0,
+  firstName: '',
+  lastName: '',
+  email: '',
+  birthday: '',
+  role: '',
+};
+
 type UserStoreT = {
   id: number;
   setId: (value: number) => void;
@@ -15,30 +24,26 @@ type UserStoreT = {
   setBirthday: (value: string) => void;
   role: string;
   setRole: (value: string) => void;
+  clearUser: () => void;
 };
 
 const useUserStore = create<UserStoreT>()(
   persist(
     (set) => ({
-      id: 0,
-      setId: (value: number) => set({ id: value}),
-      firstName: '',
-      setFirstName: (value: string) => set({ firstName: value}),
-      lastName: '',
-      setLastName: (value: string) => set({ lastName: value}),
-      email: '',
-      setEmail: (value: string) => set({ email: value}),
-      birthday: '',
-      setBirthday: (value: string) => set({ birthday: value}),
-      role: '',
-      setRole: (value: string) => set({ role: value}),
+      ...SIN_USUARIO,
+      setId: (value: number) => set({ id: value }),
+      setFirstName: (value: string) => set({ firstName: value }),
+      setLastName: (value: string) => set({ lastName: value }),
+      setEmail: (value: string) => set({ email: value }),
+      setBirthday: (value: string) => set({ birthday: value }),
+      setRole: (value: string) => set({ role: value }),
+      clearUser: () => set(SIN_USUARIO),
     }),
     {
-      name: "user-store-storage",
-      storage: createJSONStorage(() => AsyncStorage)
-    }
-  )
+      name: 'user-store-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+    },
+  ),
 );
-
 
 export default useUserStore;
