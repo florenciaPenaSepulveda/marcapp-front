@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import { Avatar, BarChart, Badge, Button, Dialog, EmptyState, Field, Notice, Sheet } from './ui';
+import { Avatar, BarChart, Badge, Button, ConfirmDialog, Dialog, EmptyState, Field, Notice, Sheet, StatTile } from './ui';
 
 describe('Button', () => {
   it('ejecuta la acción al presionar', () => {
@@ -94,5 +94,30 @@ describe('piezas de presentación', () => {
     expect(screen.getByText('8.5h')).toBeTruthy();
     expect(screen.getByText('4h')).toBeTruthy();
     expect(screen.getByText('Tue')).toBeTruthy();
+  });
+
+  it('ConfirmDialog pide confirmación y permite cancelar', () => {
+    const alConfirmar = jest.fn();
+    const alCancelar = jest.fn();
+    render(
+      <ConfirmDialog
+        visible
+        title="¿Eliminar?"
+        message="No se puede deshacer"
+        confirmLabel="Eliminar"
+        onConfirm={alConfirmar}
+        onCancel={alCancelar}
+      />,
+    );
+    fireEvent.press(screen.getByText('Eliminar'));
+    expect(alConfirmar).toHaveBeenCalledTimes(1);
+    fireEvent.press(screen.getByText('Cancel'));
+    expect(alCancelar).toHaveBeenCalledTimes(1);
+  });
+
+  it('StatTile muestra la etiqueta y el valor', () => {
+    render(<StatTile label="Hours" value="8h 30m" icon="time-outline" tone="success" />);
+    expect(screen.getByLabelText('Hours: 8h 30m')).toBeTruthy();
+    expect(screen.getByText('8h 30m')).toBeTruthy();
   });
 });

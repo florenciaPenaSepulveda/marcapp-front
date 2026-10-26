@@ -63,10 +63,12 @@
       "src/lib/**/*.ts",
       "src/services/**/*.ts",
       "src/stores/**/*.ts",
+      "src/hooks/**/*.ts",
       "src/session.ts",
       "src/components/**/*.tsx",
       "src/screens/login.tsx",
       "src/screens/home.tsx",
+      "src/screens/changePassword.tsx",
       "!src/**/*.test.{ts,tsx}"
     ],
     "coverageReporters": [
