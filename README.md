@@ -15,7 +15,7 @@ Aplicación móvil de **Marcapp**, un sistema de control de asistencia para empr
 ## Qué incluye
 
 - **Trabajador:** registro de cuenta con requisitos de contraseña en vivo, ingreso, marcaje de entrada y salida con geolocalización y reloj en vivo, resumen semanal con horas por día y total, resumen de las horas del mes en el inicio, edición de su perfil, cambio de contraseña y cierre de sesión.
-- **Administrador:** panorama de hoy en el inicio (quién está trabajando, quién terminó y quién no ha marcado); lista de todos los trabajadores con su estado de hoy, búsqueda en vivo y carga por páginas; al tocar un trabajador se abre su detalle con el resumen del mes y los marcajes de la semana, que puede corregir, agregar o eliminar; y estadísticas de horas por semana y por año, con comparación entre varios trabajadores.
+- **Administrador:** panorama de hoy en el inicio (quién está trabajando, quién terminó y quién no ha marcado); lista de todos los trabajadores con su estado de hoy, búsqueda en vivo y carga por páginas; al tocar un trabajador se abre su detalle con el resumen del mes y los marcajes de la semana, que puede corregir, agregar o eliminar, y la opción de eliminar al trabajador con confirmación; y estadísticas de horas por semana y por año, con comparación entre varios trabajadores.
 
 La interfaz usa un sistema de diseño propio (`src/theme.ts` y `src/components/ui.tsx`): tarjetas, botones, campos con validación y accesibilidad, avisos, paneles inferiores y un gráfico de barras sin librerías externas. Todas las pantallas internas tienen encabezado con flecha para volver.
 
@@ -45,7 +45,7 @@ Para abrirla en el navegador: `npm run web`. El primer administrador se crea en 
 ## Seguridad
 
 - El token de sesión se guarda cifrado en el teléfono con `expo-secure-store` (Keychain en iOS, Keystore en Android) y viaja siempre en la cabecera `Authorization`, nunca en el cuerpo de las peticiones ni en los registros.
-- Si el servidor responde 401 con una sesión activa, la app cierra la sesión y vuelve al ingreso; al reabrir la app se restaura la sesión y se valida contra el servidor.
+- Si el servidor responde 401 con una sesión activa, la app cierra la sesión y vuelve al ingreso (por ejemplo, cuando la sesión fue revocada); al cambiar la contraseña el servidor emite un token nuevo y la app lo guarda para no perder la sesión; al reabrir la app se restaura la sesión y se valida contra el servidor.
 - Los formularios validan en el cliente con las mismas reglas que el servidor (correo, nombres, contraseña de 8 a 72 caracteres con letra y número, fecha de nacimiento y fecha y hora de los marcajes).
 - Solo se pide la ubicación en primer plano, en el momento de marcar; ya no se solicita el permiso de ubicación en segundo plano.
 - No se versiona ningún `.env`.
@@ -58,7 +58,7 @@ npm run test:cov
 npm run typecheck
 ```
 
-Hay 126 pruebas sobre validaciones, cálculo de horarios, manejo de errores, servicios HTTP, el hook de trabajadores, almacenamiento y sesión, los componentes de interfaz y las pantallas de ingreso, inicio y cambio de contraseña, con cerca de 98 % de cobertura sobre ese código. El CI revisa tipos, ejecuta las pruebas, comprueba las versiones con `expo-doctor` y empaqueta la versión web.
+Hay 140 pruebas sobre validaciones, cálculo de horarios, manejo de errores, servicios HTTP, el hook de trabajadores, almacenamiento y sesión, los componentes de interfaz y las pantallas de ingreso, inicio, trabajadores y cambio de contraseña, con cerca de 98 % de cobertura sobre ese código. El CI revisa tipos, ejecuta las pruebas, comprueba las versiones con `expo-doctor` y empaqueta la versión web.
 
 ## Dependencias
 
