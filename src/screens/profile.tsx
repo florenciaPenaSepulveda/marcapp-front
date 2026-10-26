@@ -49,6 +49,12 @@ const Profile = () => {
         />
       </Card>
       <Button title="Edit profile" icon="create-outline" onPress={() => navigation.navigate('EditProfile')} />
+      <Button
+        title="Change password"
+        variant="outline"
+        icon="lock-closed-outline"
+        onPress={() => navigation.navigate('ChangePassword')}
+      />
     </Screen>
   );
 };

@@ -4,15 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
-import {
-  searchWorkerService,
-  addTimeRegistrationService,
-} from '../services/searchWorker.service';
+import { addTimeRegistrationService, summaryService } from '../services/searchWorker.service';
 import weeklySummaryService from '../services/weeklySummary.service';
-import { Marcaje, Usuario } from '../services/types';
-import { agruparPorDia, diasSinSalida } from '../lib/horarios';
+import { Marcaje, Resumen, Usuario } from '../services/types';
+import { agruparPorDia, diasSinSalida, formatearHoras } from '../lib/horarios';
 import { validarFechaHora } from '../lib/validation';
-import { Avatar, Badge, Button, Card, EmptyState, Field, Notice, Screen, Sheet } from '../components/ui';
+import { useWorkers } from '../hooks/useWorkers';
+import { WorkerList } from '../components/WorkerList';
+import { Avatar, Badge, Button, EmptyState, Field, Notice, Screen, Sheet, StatTile } from '../components/ui';
 import { colors, font, spacing } from '../theme';
 
 type SearchWorkerProps = {
@@ -22,44 +21,28 @@ type SearchWorkerProps = {
 const FORMATO = 'DD-MM-YYYY';
 
 const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<Usuario[] | null>(null);
+  const workers = useWorkers();
   const [timeRegistrations, setTimeRegistrations] = useState<Marcaje[]>([]);
+  const [resumen, setResumen] = useState<Resumen | null>(null);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sheetError, setSheetError] = useState<string | null>(null);
   const [sheetInfo, setSheetInfo] = useState<string | null>(null);
   const [newDate, setNewDate] = useState('');
   const [sheetVisible, setSheetVisible] = useState(false);
 
-  const handleSearch = async () => {
-    setLoading(true);
-    setErrorMessage(null);
-    const results = await searchWorkerService(searchTerm);
-    setLoading(false);
-    if (results.success) {
-      setSearchResults(results.data);
-    } else {
-      setSearchResults(null);
-      setErrorMessage(results.message);
-    }
-  };
-
-  const loadWeek = async (user: Usuario) => {
+  const loadDetail = async (user: Usuario) => {
     const semana = moment().startOf('isoWeek');
-    const response = await weeklySummaryService(
-      semana.format(FORMATO),
-      semana.clone().endOf('isoWeek').format(FORMATO),
-      user.id,
-    );
-    if (response.success) {
-      setTimeRegistrations(response.data);
-      return true;
+    const [registros, mes] = await Promise.all([
+      weeklySummaryService(semana.format(FORMATO), semana.clone().endOf('isoWeek').format(FORMATO), user.id),
+      summaryService(user.id),
+    ]);
+    if (registros.success) {
+      setTimeRegistrations(registros.data);
+    } else {
+      setTimeRegistrations([]);
+      setSheetError(registros.message);
     }
-    setTimeRegistrations([]);
-    setSheetError(response.message);
-    return false;
+    setResumen(mes.success ? mes.data : null);
   };
 
   const openUser = async (user: Usuario) => {
@@ -68,8 +51,9 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
     setSheetInfo(null);
     setNewDate('');
     setTimeRegistrations([]);
+    setResumen(null);
     setSheetVisible(true);
-    await loadWeek(user);
+    await loadDetail(user);
   };
 
   const handleAddTimeRegistration = async () => {
@@ -87,7 +71,8 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
       setSheetError(null);
       setSheetInfo('Time registration added.');
       setNewDate('');
-      await loadWeek(selectedUser);
+      await loadDetail(selectedUser);
+      workers.reload();
     } else {
       setSheetInfo(null);
       setSheetError(response.message);
@@ -110,51 +95,42 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
 
   return (
     <Screen style={styles.content}>
-      <Card style={styles.search}>
-        <Field
-          label="Search workers"
-          placeholder="Name or email"
-          value={searchTerm}
-          autoCapitalize="none"
-          returnKeyType="search"
-          onChangeText={setSearchTerm}
-          onSubmitEditing={handleSearch}
-        />
-        <Button title="Search" icon="search" onPress={handleSearch} loading={loading} />
-      </Card>
-
-      {errorMessage && <Notice tone="danger">{errorMessage}</Notice>}
-
-      {searchResults !== null && searchResults.length === 0 && (
-        <EmptyState icon="search-outline" title="No results" message="Try another name or email." />
-      )}
-
-      {searchResults?.map((user) => (
-        <Card key={user.id} onPress={() => openUser(user)} accessibilityLabel={`${user.firstName} ${user.lastName}`} style={styles.user}>
-          <Avatar name={user.firstName} />
-          <View style={styles.flex}>
-            <Text style={font.heading}>
-              {user.firstName} {user.lastName}
-            </Text>
-            <Text style={font.small}>{user.email}</Text>
-            <Text style={font.small}>ID {user.id}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={22} color={colors.muted} />
-        </Card>
-      ))}
+      <WorkerList workers={workers} onSelect={openUser} />
 
       <Sheet
         visible={sheetVisible}
-        title={selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName} · this week` : ''}
+        title={selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName}` : ''}
         onClose={() => setSheetVisible(false)}
       >
         <View style={styles.sheetBody}>
-          {sheetError && <Notice tone="danger">{sheetError}</Notice>}
-          {sheetInfo && <Notice tone="success">{sheetInfo}</Notice>}
-          {sinSalida.length > 0 && (
-            <Notice tone="warning">Missing check-out on: {sinSalida.join(', ')}.</Notice>
+          {selectedUser && (
+            <View style={styles.profile}>
+              <Avatar name={selectedUser.firstName} size={44} />
+              <Text style={font.small}>{selectedUser.email}</Text>
+            </View>
           )}
 
+          {resumen && (
+            <>
+              <Text style={font.heading}>{moment().format('MMMM')}</Text>
+              <View style={styles.tiles}>
+                <StatTile label="Hours" value={formatearHoras(resumen.totalHours)} icon="time-outline" />
+                <StatTile label="Days" value={String(resumen.daysWorked)} icon="calendar-outline" tone="success" />
+                <StatTile
+                  label="Avg / day"
+                  value={formatearHoras(resumen.averageHoursPerDay)}
+                  icon="speedometer-outline"
+                  tone="warning"
+                />
+              </View>
+            </>
+          )}
+
+          {sheetError && <Notice tone="danger">{sheetError}</Notice>}
+          {sheetInfo && <Notice tone="success">{sheetInfo}</Notice>}
+          {sinSalida.length > 0 && <Notice tone="warning">Missing check-out on: {sinSalida.join(', ')}.</Notice>}
+
+          <Text style={font.heading}>This week</Text>
           {ordenadas.length === 0 && !sheetError && (
             <EmptyState icon="time-outline" title="No registrations this week" />
           )}
@@ -202,9 +178,9 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   content: { maxWidth: 640, width: '100%', alignSelf: 'center' },
   flex: { flex: 1, gap: 2 },
-  search: { gap: spacing.md },
-  user: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   sheetBody: { gap: spacing.md, paddingBottom: spacing.lg },
+  profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   record: {
     flexDirection: 'row',
     alignItems: 'center',

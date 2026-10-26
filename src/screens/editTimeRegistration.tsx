@@ -5,8 +5,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
 import editTimeRegistrationService from '../services/editTimeRegistration.service';
+import { deleteTimeRegistrationService } from '../services/searchWorker.service';
 import { validarFechaHora } from '../lib/validation';
-import { Badge, Button, Card, Dialog, Field, Notice, Screen } from '../components/ui';
+import { Badge, Button, Card, ConfirmDialog, Dialog, Field, Notice, Screen } from '../components/ui';
 import { colors, font, spacing } from '../theme';
 
 const EditTimeRegistration = () => {
@@ -24,6 +25,8 @@ const EditTimeRegistration = () => {
   const [guardado, setGuardado] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const exito = useRef(false);
+  const [confirmando, setConfirmando] = useState<boolean>(false);
+  const [eliminando, setEliminando] = useState<boolean>(false);
 
   const onEdit = async () => {
     const invalida = validarFechaHora(fecha);
@@ -38,6 +41,18 @@ const EditTimeRegistration = () => {
     if (response.success) {
       exito.current = true;
       setGuardado(true);
+    } else {
+      setError(response.message);
+    }
+  };
+
+  const onDelete = async () => {
+    setEliminando(true);
+    const response = await deleteTimeRegistrationService(Number(id));
+    setEliminando(false);
+    setConfirmando(false);
+    if (response.success) {
+      navigation.goBack();
     } else {
       setError(response.message);
     }
@@ -83,6 +98,21 @@ const EditTimeRegistration = () => {
         <Button title="Save changes" onPress={onEdit} loading={loading} />
         <Button title="Cancel" variant="ghost" onPress={() => navigation.goBack()} />
       </Card>
+      <Button
+        title="Delete registration"
+        variant="outline"
+        icon="trash-outline"
+        onPress={() => setConfirmando(true)}
+      />
+      <ConfirmDialog
+        visible={confirmando}
+        title="Delete this registration?"
+        message="This cannot be undone. The worker's hours for the day will be recalculated."
+        confirmLabel="Delete"
+        loading={eliminando}
+        onConfirm={onDelete}
+        onCancel={() => setConfirmando(false)}
+      />
 
       <Dialog
         visible={guardado}

@@ -1,21 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
 import viewGraphicsService from '../services/viewGraphics.service';
-import { Usuario } from '../services/types';
+import { summaryService } from '../services/searchWorker.service';
+import { Resumen, Usuario } from '../services/types';
 import { formatearHoras } from '../lib/horarios';
-import {
-  Avatar,
-  BarChart,
-  Button,
-  Card,
-  EmptyState,
-  Field,
-  Notice,
-  Screen,
-  Sheet,
-} from '../components/ui';
+import { useWorkers } from '../hooks/useWorkers';
+import { WorkerList } from '../components/WorkerList';
+import { Avatar, BarChart, Button, Card, EmptyState, Notice, Screen, Sheet, StatTile } from '../components/ui';
 import { colors, font, radius, spacing } from '../theme';
 
 type VistaT = 'year' | 'week';
@@ -29,13 +22,13 @@ const etiquetaSemana = (semana: moment.Moment) => {
 };
 
 const ViewGraphics = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<Usuario[] | null>(null);
+  const workers = useWorkers();
+  const [comparar, setComparar] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<Usuario[]>([]);
-  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [averageHours, setAverageHours] = useState<Record<number, number[]>>({});
+  const [resumenes, setResumenes] = useState<Record<number, Resumen>>({});
   const [selectedYear, setSelectedYear] = useState<number>(moment().year());
   const [viewType, setViewType] = useState<VistaT>('year');
   const [currentWeek, setCurrentWeek] = useState(() => moment().startOf('isoWeek'));
@@ -79,30 +72,42 @@ const ViewGraphics = () => {
   );
 
   useEffect(() => {
-    if (sheetVisible) {
-      selectedUsers.forEach((user) => {
-        cargarHoras(user.id);
-      });
+    if (!sheetVisible) {
+      return;
     }
+    setErrorMessage(null);
+    selectedUsers.forEach((user) => {
+      cargarHoras(user.id);
+    });
   }, [selectedUsers, sheetVisible, cargarHoras]);
 
-  const handleSearch = async () => {
-    setLoading(true);
-    setErrorMessage(null);
-    const results = await viewGraphicsService.viewGraphicsService(searchTerm);
-    setLoading(false);
-    if (results.success) {
-      setSearchResults(results.data);
-    } else {
-      setSearchResults(null);
-      setErrorMessage(results.message);
+  useEffect(() => {
+    if (!sheetVisible) {
+      return;
     }
+    selectedUsers.forEach(async (user) => {
+      const respuesta = await summaryService(user.id);
+      if (respuesta.success) {
+        setResumenes((previo) => ({ ...previo, [user.id]: respuesta.data }));
+      }
+    });
+  }, [selectedUsers, sheetVisible]);
+
+  const alElegir = (user: Usuario) => {
+    if (comparar) {
+      setSelectedUsers((previo) =>
+        previo.some((u) => u.id === user.id) ? previo.filter((u) => u.id !== user.id) : [...previo, user],
+      );
+      return;
+    }
+    setSelectedUsers([user]);
+    setSheetVisible(true);
   };
 
-  const toggleUser = (user: Usuario) =>
-    setSelectedUsers((previo) =>
-      previo.some((u) => u.id === user.id) ? previo.filter((u) => u.id !== user.id) : [...previo, user],
-    );
+  const alCambiarModo = (activo: boolean) => {
+    setComparar(activo);
+    setSelectedUsers([]);
+  };
 
   const moverPeriodo = (paso: number) =>
     viewType === 'year'
@@ -111,55 +116,28 @@ const ViewGraphics = () => {
 
   return (
     <Screen style={styles.content}>
-      <Card style={styles.search}>
-        <Field
-          label="Search workers"
-          placeholder="Name or email"
-          value={searchTerm}
-          autoCapitalize="none"
-          returnKeyType="search"
-          onChangeText={setSearchTerm}
-          onSubmitEditing={handleSearch}
+      <Card style={styles.mode}>
+        <View style={styles.flex}>
+          <Text style={font.heading}>Compare workers</Text>
+          <Text style={font.small}>
+            {comparar ? 'Select two or more workers.' : 'Tap a worker to see their hours.'}
+          </Text>
+        </View>
+        <Switch
+          value={comparar}
+          onValueChange={alCambiarModo}
+          trackColor={{ true: colors.primary, false: colors.border }}
+          accessibilityLabel="Compare workers"
         />
-        <Button title="Search" icon="search" onPress={handleSearch} loading={loading} />
       </Card>
 
-      {errorMessage && <Notice tone="danger">{errorMessage}</Notice>}
+      <WorkerList
+        workers={workers}
+        onSelect={alElegir}
+        selectedIds={comparar ? selectedUsers.map((u) => u.id) : undefined}
+      />
 
-      {searchResults !== null && searchResults.length === 0 && (
-        <EmptyState icon="search-outline" title="No results" message="Try another name or email." />
-      )}
-
-      {searchResults && searchResults.length > 0 && (
-        <Text style={font.small}>Select one or more workers to view or compare their hours.</Text>
-      )}
-
-      {searchResults?.map((user) => {
-        const elegido = selectedUsers.some((u) => u.id === user.id);
-        return (
-          <Card
-            key={user.id}
-            onPress={() => toggleUser(user)}
-            accessibilityLabel={`${elegido ? 'Deselect' : 'Select'} ${user.firstName} ${user.lastName}`}
-            style={[styles.user, elegido && styles.userSelected]}
-          >
-            <Avatar name={user.firstName} />
-            <View style={styles.flex}>
-              <Text style={font.heading}>
-                {user.firstName} {user.lastName}
-              </Text>
-              <Text style={font.small}>{user.email}</Text>
-            </View>
-            <Ionicons
-              name={elegido ? 'checkbox' : 'square-outline'}
-              size={26}
-              color={elegido ? colors.primary : colors.muted}
-            />
-          </Card>
-        );
-      })}
-
-      {selectedUsers.length > 0 && (
+      {comparar && selectedUsers.length > 0 && (
         <Button
           title={`View statistics (${selectedUsers.length})`}
           icon="bar-chart"
@@ -167,8 +145,14 @@ const ViewGraphics = () => {
         />
       )}
 
-      <Sheet visible={sheetVisible} title="Worked hours" onClose={() => setSheetVisible(false)}>
+      <Sheet
+        visible={sheetVisible}
+        title={selectedUsers.length === 1 ? `${selectedUsers[0].firstName} ${selectedUsers[0].lastName}` : 'Worked hours'}
+        onClose={() => setSheetVisible(false)}
+      >
         <View style={styles.sheetBody}>
+          {errorMessage && <Notice tone="danger">{errorMessage}</Notice>}
+
           <View style={styles.segment}>
             {(['year', 'week'] as VistaT[]).map((vista) => (
               <Pressable
@@ -197,29 +181,38 @@ const ViewGraphics = () => {
 
           {selectedUsers.map((user) => {
             const datos = averageHours[user.id];
-            const hayDatos = datos?.some((horas) => horas !== 0);
-            const promedio = hayDatos ? datos.filter((h) => h > 0).reduce((a, b) => a + b, 0) / datos.filter((h) => h > 0).length : 0;
+            const resumen = resumenes[user.id];
+            const conHoras = datos?.filter((horas) => horas > 0) ?? [];
+            const promedio = conHoras.length ? conHoras.reduce((a, b) => a + b, 0) / conHoras.length : 0;
             return (
               <View key={user.id} style={styles.userChart}>
-                <View style={styles.userHeader}>
-                  <Avatar name={user.firstName} size={36} />
-                  <Text style={font.heading}>
-                    {user.firstName} {user.lastName}
-                  </Text>
-                </View>
-                {hayDatos ? (
+                {selectedUsers.length > 1 && (
+                  <View style={styles.userHeader}>
+                    <Avatar name={user.firstName} size={36} />
+                    <Text style={font.heading}>
+                      {user.firstName} {user.lastName}
+                    </Text>
+                  </View>
+                )}
+                {resumen && (
+                  <View style={styles.tiles}>
+                    <StatTile label={`${moment().format('MMM')} hours`} value={formatearHoras(resumen.totalHours)} icon="time-outline" />
+                    <StatTile label="Days worked" value={String(resumen.daysWorked)} icon="calendar-outline" tone="success" />
+                    <StatTile
+                      label="Avg / day"
+                      value={formatearHoras(resumen.averageHoursPerDay)}
+                      icon="speedometer-outline"
+                      tone="warning"
+                    />
+                  </View>
+                )}
+                {conHoras.length > 0 ? (
                   <>
                     <BarChart data={datos} labels={viewType === 'year' ? MESES : DIAS} />
-                    <Text style={font.small}>
-                      Average on days with data: {formatearHoras(promedio)}
-                    </Text>
+                    <Text style={font.small}>Average on days with data: {formatearHoras(promedio)}</Text>
                   </>
                 ) : (
-                  <EmptyState
-                    icon="analytics-outline"
-                    title="No data for this period"
-                    message="Try another week or year."
-                  />
+                  <EmptyState icon="analytics-outline" title="No data for this period" message="Try another week or year." />
                 )}
               </View>
             );
@@ -232,11 +225,10 @@ const ViewGraphics = () => {
 
 const styles = StyleSheet.create({
   content: { maxWidth: 640, width: '100%', alignSelf: 'center' },
-  flex: { flex: 1, gap: 2 },
-  search: { gap: spacing.md },
-  user: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderWidth: 2, borderColor: 'transparent' },
-  userSelected: { borderColor: colors.primary },
+  flex: { flex: 1 },
+  mode: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   sheetBody: { gap: spacing.lg, paddingBottom: spacing.lg },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   segment: { flexDirection: 'row', backgroundColor: colors.background, borderRadius: radius.md, padding: 4 },
   segmentItem: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: radius.sm },
   segmentActive: { backgroundColor: colors.primary },

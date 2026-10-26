@@ -14,6 +14,7 @@ import WeeklySummary from './src/screens/weeklySummary';
 import SearchWorker from './src/screens/searchWorker';
 import ViewGraphics from './src/screens/viewGraphics';
 import EditTimeRegistration from './src/screens/editTimeRegistration';
+import ChangePassword from './src/screens/changePassword';
 import { navigationRef } from './src/navigation';
 import { colors } from './src/theme';
 
@@ -25,6 +26,7 @@ export type RootStackParamList = {
   Profile: undefined;
   TimeRegistration: undefined;
   EditProfile: undefined;
+  ChangePassword: undefined;
   WeeklySummary: undefined;
   SearchWorker: undefined;
   ViewGraphics: undefined;
@@ -63,6 +65,7 @@ const RouterProvider = () => (
       <Stack.Screen name="WeeklySummary" component={WeeklySummary} options={{ title: 'Weekly summary' }} />
       <Stack.Screen name="Profile" component={Profile} options={{ title: 'My profile' }} />
       <Stack.Screen name="EditProfile" component={EditProfile} options={{ title: 'Edit profile' }} />
+      <Stack.Screen name="ChangePassword" component={ChangePassword} options={{ title: 'Change password' }} />
       <Stack.Screen name="SearchWorker" component={SearchWorker} options={{ title: 'Workers' }} />
       <Stack.Screen name="ViewGraphics" component={ViewGraphics} options={{ title: 'Statistics' }} />
       <Stack.Screen
