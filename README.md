@@ -4,6 +4,16 @@
 
 Aplicación móvil de **Marcapp**, un sistema de control de asistencia para empresas: los trabajadores registran su entrada y salida con su ubicación y revisan su resumen semanal; los administradores buscan trabajadores, corrigen marcajes y consultan estadísticas de horas. Hecha con Expo y React Native; también corre en el navegador.
 
+## Inicio rápido
+
+```
+cp .env.example .env     # URL de los dos microservicios
+npm ci
+npm run web
+```
+
+Requiere los dos microservicios en ejecución. Pruebas: 238 con 98 % de cobertura (`npm run test:cov`).
+
 ## Repositorios del proyecto
 
 | Repositorio | Descripción |
