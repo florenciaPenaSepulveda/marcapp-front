@@ -1,11 +1,13 @@
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RouterProvider from './Router';
+import { SyncEngine } from './src/components/SyncEngine';
 import { colors } from './src/theme';
 
 const App = () => (
   <SafeAreaProvider>
     <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+    <SyncEngine />
     <RouterProvider />
   </SafeAreaProvider>
 );
