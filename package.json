@@ -16,10 +16,12 @@
     "@expo/metro-runtime": "~3.2.3",
     "@expo/vector-icons": "^14.0.3",
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-community/netinfo": "11.3.1",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
     "axios": "^1.6.8",
     "expo": "^51.0.14",
+    "expo-crypto": "~13.0.2",
     "expo-font": "~12.0.10",
     "expo-location": "~17.0.1",
     "expo-secure-store": "~13.0.2",
@@ -70,6 +72,9 @@
       "src/screens/home.tsx",
       "src/screens/changePassword.tsx",
       "src/screens/searchWorker.tsx",
+      "src/screens/timeRegistration.tsx",
+      "src/screens/loading.tsx",
+      "src/screens/weeklySummary.tsx",
       "!src/**/*.test.{ts,tsx}"
     ],
     "coverageReporters": [
