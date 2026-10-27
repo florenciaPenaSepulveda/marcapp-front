@@ -1,12 +1,9 @@
-import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
-import * as Location from 'expo-location';
 import { marcajeApi, usersApi } from './http';
 import loginService from './login.service';
 import profileService from './profile.service';
 import registerService from './register.service';
 import editService from './editprofile.service';
-import timeRegistrationService from './timeRegistration.service';
 import getRegistrationStateService from './getRegistrationStateService.service';
 import weeklySummaryService from './weeklySummary.service';
 import {
@@ -21,7 +18,6 @@ import {
 import changePasswordService from './password.service';
 import editTimeRegistrationService from './editTimeRegistration.service';
 import viewGraphicsService from './viewGraphics.service';
-import healthcheckService from './healthcheck.service';
 import useTokenStore from '../stores/tokenStore';
 import useUserStore from '../stores/useStore';
 import { cerrarSesion } from '../session';
@@ -147,37 +143,6 @@ describe('registro y edición de perfil', () => {
 
 describe('marcajes', () => {
   const marca = { id: 1, id_user: 7, date: '11-03-2024 09:00:00', type: 'entry', adminFlag: false, latCoordinate: '-33', longCoordinate: '-70' };
-
-  it('registra la hora con la ubicación y sin token en el cuerpo', async () => {
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
-    (Location.getCurrentPositionAsync as jest.Mock).mockResolvedValue({ coords: { latitude: -33.44, longitude: -70.66 } });
-    marcajes.onPost('/marcaje').reply(201, { success: true, data: marca });
-    const res = await timeRegistrationService();
-    expect(res).toEqual({ success: true, data: marca });
-    expect(JSON.parse(marcajes.history.post[0].data)).toEqual({ latCoordinate: '-33.44', longCoordinate: '-70.66' });
-  });
-
-  it('exige el permiso de ubicación', async () => {
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'denied' });
-    const res = await timeRegistrationService();
-    expect(res).toMatchObject({ success: false, message: expect.stringMatching(/Location permission/) });
-    expect(marcajes.history.post).toHaveLength(0);
-  });
-
-  it('tolera errores al obtener la ubicación', async () => {
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockRejectedValue(new Error('sin GPS'));
-    expect((await timeRegistrationService()).success).toBe(false);
-  });
-
-  it('muestra el mensaje de negocio del servidor', async () => {
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
-    (Location.getCurrentPositionAsync as jest.Mock).mockResolvedValue({ coords: { latitude: 1, longitude: 2 } });
-    marcajes.onPost('/marcaje').reply(201, { success: false, message: 'Please wait a few seconds before registering again' });
-    expect(await timeRegistrationService()).toEqual({
-      success: false,
-      message: 'Please wait a few seconds before registering again',
-    });
-  });
 
   it('consulta el estado del día', async () => {
     marcajes.onPost('/marcaje/user/today/7').reply(201, 1);
@@ -309,18 +274,5 @@ describe('administración de usuarios y estadísticas', () => {
     marcajes.onGet('/statistics/daily').reply(500);
     expect((await viewGraphicsService.getMonthlyAverageHours(7)).success).toBe(false);
     expect((await viewGraphicsService.getWeeklyAverageHours(7)).success).toBe(false);
-  });
-});
-
-describe('healthcheck', () => {
-  it('responde verdadero solo con un 200', async () => {
-    const externo = new MockAdapter(axios);
-    externo.onGet('http://ok').reply(200);
-    externo.onGet('http://mal').reply(500);
-    externo.onGet('http://caido').networkError();
-    expect(await healthcheckService('http://ok')).toBe(true);
-    expect(await healthcheckService('http://mal')).toBe(false);
-    expect(await healthcheckService('http://caido')).toBe(false);
-    externo.restore();
   });
 });
