@@ -4,10 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../Router';
-import healthcheckService from '../services/healthcheck.service';
 import profileService from '../services/profile.service';
-import { MARCAJE_URL, USERS_URL } from '../config';
 import useTokenStore from '../stores/tokenStore';
+import useUserStore from '../stores/useStore';
 import { Button } from '../components/ui';
 import { colors, font, radius, spacing } from '../theme';
 
@@ -19,17 +18,13 @@ const Loading = () => {
 
   const iniciar = useCallback(async () => {
     setErrorMessage(undefined);
-    const [usuariosListo, marcajeListo] = await Promise.all([
-      healthcheckService(USERS_URL),
-      healthcheckService(MARCAJE_URL),
-    ]);
-    if (!usuariosListo || !marcajeListo) {
-      setErrorMessage('We could not connect to the server. Check your connection and try again.');
-      return;
-    }
-
     if (!useTokenStore.getState().token) {
       navigation.replace('Login');
+      return;
+    }
+    if (useUserStore.getState().id > 0) {
+      void profileService();
+      navigation.replace('Home');
       return;
     }
     const perfil = await profileService();

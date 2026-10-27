@@ -4,6 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
 import useUserStore from '../stores/useStore';
 import weeklySummaryService from '../services/weeklySummary.service';
+import usePendingStore from '../stores/pendingStore';
+import { pendientesComoMarcajes } from '../lib/estadoLocal';
+import { SyncBanner } from '../components/SyncBanner';
 import { Marcaje } from '../services/types';
 import { agruparPorDia, diasSinSalida, formatearHoras, hora, totalDeHoras } from '../lib/horarios';
 import { Badge, Button, Card, EmptyState, Notice, Screen } from '../components/ui';
@@ -16,7 +19,8 @@ const formatDate = (date: moment.Moment) =>
 
 const WeeklySummary = () => {
   const userId = useUserStore((state) => state.id);
-  const [timeRegistrations, setTimeRegistrations] = useState<Marcaje[]>([]);
+  const [serverRegistrations, setTimeRegistrations] = useState<Marcaje[]>([]);
+  const pending = usePendingStore((state) => state.pending);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [currentWeek, setCurrentWeek] = useState(() => moment().startOf('isoWeek'));
@@ -44,7 +48,22 @@ const WeeklySummary = () => {
     fetchWeeklyData();
   }, [fetchWeeklyData]);
 
-  const jornadas = useMemo(() => agruparPorDia(timeRegistrations), [timeRegistrations]);
+  const registrosPendientes = useMemo(() => {
+    const inicio = currentWeek.valueOf();
+    const fin = currentWeek.clone().endOf('isoWeek').valueOf();
+    return pendientesComoMarcajes(pending, userId).filter((marca) => {
+      const momento = moment(marca.date, 'DD-MM-YYYY HH:mm:ss').valueOf();
+      return momento >= inicio && momento <= fin;
+    });
+  }, [pending, userId, currentWeek]);
+  const diasPendientes = useMemo(
+    () => new Set(registrosPendientes.map((marca) => marca.date.split(' ')[0])),
+    [registrosPendientes],
+  );
+  const jornadas = useMemo(
+    () => agruparPorDia([...serverRegistrations, ...registrosPendientes]),
+    [serverRegistrations, registrosPendientes],
+  );
   const pendientes = diasSinSalida(jornadas);
 
   const cambiarSemana = (semanas: number) =>
@@ -79,6 +98,8 @@ const WeeklySummary = () => {
           <Ionicons name="chevron-forward" size={24} color={colors.primary} />
         </Pressable>
       </Card>
+
+      <SyncBanner />
 
       {!esSemanaActual && (
         <Button
@@ -127,6 +148,9 @@ const WeeklySummary = () => {
               <Badge label="Incomplete" tone="warning" />
             )}
           </View>
+          {diasPendientes.has(jornada.dia) && (
+            <Badge label="Waiting to be sent" tone="info" />
+          )}
           <View style={styles.times}>
             <View style={styles.time}>
               <Ionicons name="log-in-outline" size={20} color={colors.success} />

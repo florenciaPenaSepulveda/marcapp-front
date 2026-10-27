@@ -10,6 +10,7 @@ import { cerrarSesion } from '../session';
 import { summaryService, teamStatusService, userStatsService } from '../services/searchWorker.service';
 import { EstadisticasDeUsuarios, EstadoDeHoy, Resumen } from '../services/types';
 import { formatearHoras } from '../lib/horarios';
+import { SyncBanner } from '../components/SyncBanner';
 import { Avatar, Badge, Button, Card, Screen, SectionTitle, StatTile } from '../components/ui';
 import { colors, font, radius, spacing } from '../theme';
 
@@ -75,6 +76,8 @@ const Home = () => {
         <Badge label={role === 'admin' ? 'Admin' : 'Worker'} tone={role === 'admin' ? 'warning' : 'info'} />
       </View>
       <Text style={font.small}>{moment().format('dddd, D MMMM YYYY')}</Text>
+
+      <SyncBanner />
 
       {role === 'admin' && equipo && (
         <>

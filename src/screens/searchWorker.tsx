@@ -204,6 +204,7 @@ const SearchWorker: React.FC<SearchWorkerProps> = ({ navigation }) => {
                     : 'Location not available'}
                 </Text>
                 {registration.adminFlag && <Badge label="Edited by admin" tone="warning" />}
+                {registration.offline && <Badge label="Recorded offline" tone="info" />}
               </View>
               <Ionicons name="create-outline" size={22} color={colors.primary} />
             </Pressable>

@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
 import useUserStore from '../stores/useStore';
+import usePendingStore from '../stores/pendingStore';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Router';
-import timeRegistrationService from '../services/timeRegistration.service';
+import timeRegistrationService, {
+  ResultadoDeRegistro,
+} from '../services/timeRegistration.service';
 import getRegistrationStateService, {
   EstadoDelDia,
 } from '../services/getRegistrationStateService.service';
-import { Marcaje } from '../services/types';
+import { diaLocal, estadoLocal } from '../lib/estadoLocal';
+import { SyncBanner } from '../components/SyncBanner';
 import { Badge, Button, Card, Notice, Screen } from '../components/ui';
 import { colors, font, shadow, spacing } from '../theme';
 
@@ -28,10 +32,11 @@ const TimeRegistration = () => {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const firstName = useUserStore((state) => state.firstName);
   const userId = useUserStore((state) => state.id);
-  const [timeRegistration, setTimeRegistration] = useState<Marcaje | null>(null);
+  const knownState = usePendingStore((state) => state.knownState);
+  const pending = usePendingStore((state) => state.pending);
+  const setKnownState = usePendingStore((state) => state.setKnownState);
+  const [resultado, setResultado] = useState<ResultadoDeRegistro | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [registrationState, setRegistrationState] =
-    useState<EstadoDelDia | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [ahora, setAhora] = useState(moment());
 
@@ -40,80 +45,88 @@ const TimeRegistration = () => {
     return () => clearInterval(reloj);
   }, []);
 
-  const fetchRegistrationState = useCallback(async () => {
-    setErrorMessage('');
-    const response = await getRegistrationStateService(userId);
-    if (response.success) {
-      setRegistrationState(response.data);
-    } else {
-      setErrorMessage(response.message);
+  const refrescarEstado = useCallback(async () => {
+    const respuesta = await getRegistrationStateService(userId);
+    if (respuesta.success) {
+      setKnownState({ userId, day: diaLocal(), state: respuesta.data });
     }
-  }, [userId]);
+  }, [userId, setKnownState]);
 
   useEffect(() => {
-    fetchRegistrationState();
-  }, [fetchRegistrationState]);
+    refrescarEstado();
+  }, [refrescarEstado]);
+
+  const estadoActual = useMemo(
+    () => estadoLocal(userId, knownState, pending),
+    [userId, knownState, pending],
+  );
+  const estado = ESTADOS[estadoActual];
 
   const handleRegistration = async () => {
     setLoading(true);
     setErrorMessage('');
-    const response = await timeRegistrationService();
+    const respuesta = await timeRegistrationService();
     setLoading(false);
-    if (response.success) {
-      setTimeRegistration(response.data);
-      setRegistrationState(response.data.type === 'entry' ? 1 : 2);
+    if (respuesta.success) {
+      setResultado(respuesta.data);
     } else {
-      setErrorMessage(response.message);
+      setErrorMessage(respuesta.message);
     }
   };
 
-  const estado = registrationState === null ? null : ESTADOS[registrationState];
+  const mensajeDeResultado = () => {
+    if (!resultado) {
+      return null;
+    }
+    if (resultado.mode === 'online') {
+      const tipo = resultado.marca.type === 'entry' ? 'check-in' : 'check-out';
+      return (
+        <Notice tone="success">
+          {firstName}, your {tipo} was registered at {resultado.marca.date.split(' ')[1]}.
+        </Notice>
+      );
+    }
+    const tipo = resultado.pendiente.type === 'entry' ? 'check-in' : 'check-out';
+    return (
+      <Notice tone="warning">
+        No signal. Your {tipo} of {moment(resultado.pendiente.recordedAt).format('HH:mm')} was saved on this device and will be sent automatically.
+      </Notice>
+    );
+  };
 
   return (
     <Screen style={styles.content}>
       <Card style={styles.clock}>
         <Text style={styles.time}>{ahora.format('HH:mm:ss')}</Text>
         <Text style={font.small}>{ahora.format('dddd, D MMMM YYYY')}</Text>
-        {estado && (
-          <View style={styles.centrado}>
-            <Badge label={estado.titulo} tone={estado.tono} />
-          </View>
-        )}
+        <View style={styles.centrado}>
+          <Badge label={estado.titulo} tone={estado.tono} />
+        </View>
       </Card>
 
+      <SyncBanner />
+
       <View style={styles.actionArea}>
-        {estado ? (
-          <Pressable
-            onPress={handleRegistration}
-            disabled={loading || registrationState === 2}
-            accessibilityRole="button"
-            accessibilityLabel={estado.accion}
-            accessibilityState={{ disabled: loading || registrationState === 2, busy: loading }}
-            style={({ pressed }) => [
-              styles.bigButton,
-              { backgroundColor: estado.color },
-              pressed && styles.pressed,
-              registrationState === 2 && styles.bigButtonDone,
-            ]}
-          >
-            <Ionicons name={loading ? 'hourglass-outline' : estado.icono} size={46} color="#fff" />
-            <Text style={styles.bigButtonText}>{loading ? 'Registering…' : estado.accion}</Text>
-          </Pressable>
-        ) : errorMessage ? (
-          <Button title="Try again" icon="refresh" onPress={fetchRegistrationState} />
-        ) : (
-          <Text style={font.small}>Loading your status…</Text>
-        )}
+        <Pressable
+          onPress={handleRegistration}
+          disabled={loading || estadoActual === 2}
+          accessibilityRole="button"
+          accessibilityLabel={estado.accion}
+          accessibilityState={{ disabled: loading || estadoActual === 2, busy: loading }}
+          style={({ pressed }) => [
+            styles.bigButton,
+            { backgroundColor: estado.color },
+            pressed && styles.pressed,
+            estadoActual === 2 && styles.bigButtonDone,
+          ]}
+        >
+          <Ionicons name={loading ? 'hourglass-outline' : estado.icono} size={46} color="#fff" />
+          <Text style={styles.bigButtonText}>{loading ? 'Registering…' : estado.accion}</Text>
+        </Pressable>
       </View>
 
       {errorMessage !== '' && <Notice tone="danger">{errorMessage}</Notice>}
-
-      {timeRegistration && (
-        <Notice tone="success">
-          {firstName}, your {timeRegistration.type === 'entry' ? 'check-in' : 'check-out'} was registered at{' '}
-          {timeRegistration.date.split(' ')[1]}.
-        </Notice>
-      )}
+      {mensajeDeResultado()}
 
       <Text style={[font.small, styles.center]}>Your location is requested only when you register.</Text>
       <Button
