@@ -18,6 +18,7 @@ export type Marcaje = {
   date: string;
   type: 'entry' | 'exit';
   adminFlag: boolean;
+  offline?: boolean;
   latCoordinate: string | null;
   longCoordinate: string | null;
 };
