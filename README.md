@@ -19,6 +19,20 @@ Aplicación móvil de **Marcapp**, un sistema de control de asistencia para empr
 
 La interfaz usa un sistema de diseño propio (`src/theme.ts` y `src/components/ui.tsx`): tarjetas, botones, campos con validación y accesibilidad, avisos, paneles inferiores y un gráfico de barras sin librerías externas. Todas las pantallas internas tienen encabezado con flecha para volver.
 
+## Funcionamiento sin conexión
+
+El trabajador puede abrir la app, navegar y marcar entrada y salida aunque no tenga señal; los registros se guardan en el teléfono y se envían solos cuando vuelve la conexión.
+
+- **Apertura:** con una sesión guardada la app abre directamente en el inicio, sin esperar al servidor, y actualiza el perfil en segundo plano. El ingreso (la primera vez) sí requiere conexión.
+- **Marcaje:** la app intenta enviarlo al servidor. Si no hay red, la solicitud falla por falta de señal o hay marcajes anteriores esperando, lo guarda en una cola local (`pending-registrations-storage`) con la hora del dispositivo, la ubicación y un identificador único. El botón sigue alternando entre entrada y salida según lo guardado, y el aviso indica que el registro quedó en el teléfono.
+- **Orden:** mientras haya registros en la cola, los nuevos también se encolan, de modo que siempre se envían en el orden en que se hicieron.
+- **Envío:** se sincroniza al volver la conexión, al volver a abrir la app, cada 30 segundos mientras haya pendientes y con el botón "Send now". Como cada registro lleva su identificador, un reintento tras una respuesta perdida no lo duplica.
+- **Rechazos:** si el servidor rechaza un registro por una regla de negocio (por ejemplo, el día ya estaba completo), deja de reintentarse y se muestra un aviso con el motivo, que se puede descartar. Los fallos de red, 429 y 5xx se reintentan; si la sesión venció, la cola se conserva y se envía tras volver a ingresar.
+- **Resumen semanal:** muestra los registros pendientes junto con los del servidor, señalados como "Waiting to be sent", y los suma al total.
+- **Administrador:** los marcajes hechos sin conexión se muestran con la insignia "Recorded offline".
+
+La hora del dispositivo se puede manipular, por eso el servidor la acota (no puede ser futura ni tener más de 72 horas) y señala esos registros; ver el README de `marcapp-marcaje-ms`.
+
 ## Requisitos
 
 - Node.js 24 (ver `.nvmrc`).
@@ -58,7 +72,7 @@ npm run test:cov
 npm run typecheck
 ```
 
-Hay 140 pruebas sobre validaciones, cálculo de horarios, manejo de errores, servicios HTTP, el hook de trabajadores, almacenamiento y sesión, los componentes de interfaz y las pantallas de ingreso, inicio, trabajadores y cambio de contraseña, con cerca de 98 % de cobertura sobre ese código. El CI revisa tipos, ejecuta las pruebas, comprueba las versiones con `expo-doctor` y empaqueta la versión web.
+Hay 238 pruebas sobre validaciones, cálculo de horarios, manejo de errores, servicios HTTP, el hook de trabajadores, la cola sin conexión y su sincronización, almacenamiento y sesión, los componentes de interfaz y las pantallas de ingreso, carga, inicio, marcaje, resumen semanal, trabajadores y cambio de contraseña, con cerca de 98 % de cobertura sobre ese código. El CI revisa tipos, ejecuta las pruebas, comprueba las versiones con `expo-doctor` y empaqueta la versión web.
 
 ## Dependencias
 
